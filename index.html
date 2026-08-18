@@ -1,432 +1,1102 @@
 <!DOCTYPE html>
+
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AR Airplane Figure 8</title>
+
+<meta name="viewport"
+     content="width=device-width,
+              initial-scale=1.0,
+              maximum-scale=1.0,
+              user-scalable=no">
+
+  <title>AR Airplane Figure 8 - Zoom 1x</title>
 
   <!-- A-Frame -->
+
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
 
   <!-- AR.js -->
-  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/three.js/build/ar-threex-location-only.js"></script>
+
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
 
   <style>
-    html, body {
+
+    html,
+    body {
       margin: 0;
       padding: 0;
+
       width: 100%;
       height: 100%;
+
       overflow: hidden;
+
       font-family: Arial, sans-serif;
+
+      background: #000;
     }
 
+
+    /* ==========================================
+       Speed Button
+    ========================================== */
+
     #speedButton {
+
       position: fixed;
+
       z-index: 9999;
+
       bottom: 30px;
+
       left: 50%;
+
       transform: translateX(-50%);
 
       padding: 16px 30px;
+
       border: none;
+
       border-radius: 50px;
 
-      background: rgba(0, 0, 0, 0.75);
+      background: rgba(0,0,0,0.75);
+
       color: white;
 
       font-size: 18px;
+
       font-weight: bold;
 
-      box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+      box-shadow:
+        0 5px 20px rgba(0,0,0,0.4);
+
       cursor: pointer;
 
       -webkit-tap-highlight-color: transparent;
     }
 
+
     #speedButton:active {
-      transform: translateX(-50%) scale(0.95);
+
+      transform:
+        translateX(-50%)
+        scale(0.95);
+
     }
 
+
+    /* ==========================================
+       Speed Text
+    ========================================== */
+
     #speedText {
+
       position: fixed;
+
       z-index: 9999;
-      top: 20px;
+
+      top: 15px;
+
       left: 50%;
+
       transform: translateX(-50%);
 
       padding: 8px 16px;
+
       border-radius: 20px;
 
-      background: rgba(0,0,0,0.6);
+      background:
+        rgba(0,0,0,0.65);
+
       color: white;
 
       font-size: 15px;
+
+      white-space: nowrap;
+
     }
+
+
+    /* ==========================================
+       Camera Status
+    ========================================== */
+
+    #cameraStatus {
+
+      position: fixed;
+
+      z-index: 9999;
+
+      top: 55px;
+
+      left: 50%;
+
+      transform: translateX(-50%);
+
+      padding: 7px 14px;
+
+      border-radius: 20px;
+
+      background:
+        rgba(0,0,0,0.55);
+
+      color: white;
+
+      font-size: 12px;
+
+      white-space: nowrap;
+
+    }
+
+
+    /* ==========================================
+       ป้องกันการเลือกข้อความ
+    ========================================== */
+
+    * {
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
   </style>
+
 </head>
 
 <body>
 
-  <div id="speedText">ความเร็ว: 1x</div>
-  <button id="speedButton">✈️ เพิ่มความเร็ว</button>
+  <!-- ==========================================
+       UI
+  ========================================== -->
 
-  <a-scene
-    embedded
-    vr-mode-ui="enabled: false"
-    renderer="logarithmicDepthBuffer: true; colorManagement: true"
-    arjs="sourceType: webcam; debugUIEnabled: false;">
+  <div id="speedText">
+    ความเร็ว: 1.0x
+  </div>
 
-    <!-- Hiro Marker -->
-    <a-marker
-      id="hiroMarker"
-      preset="hiro"
-      emitevents="true">
+  <div id="cameraStatus">
+    📷 กำลังเตรียมกล้อง 1x...
+  </div>
 
-      <!-- เครื่องบินลำที่ 1 -->
-      <a-entity
-        id="plane1"
-        position="0 0.8 0"
-        scale="0.45 0.45 0.45">
+  <button id="speedButton">
+    ✈️ เพิ่มความเร็ว
+  </button>
 
-        <!-- ลำตัว -->
-        <a-box
-          position="0 0 0"
-          depth="1.6"
-          height="0.18"
-          width="0.22"
-          color="#eeeeee">
-        </a-box>
+  <!-- ==========================================
+       AR SCENE
+  ========================================== -->
 
-        <!-- ปีก -->
-        <a-box
-          position="0 0 0"
-          depth="0.25"
-          height="0.08"
-          width="1.8"
-          color="#2196f3">
-        </a-box>
+<a-scene
 
-        <!-- หาง -->
-        <a-box
-          position="0 0.08 0.65"
-          depth="0.35"
-          height="0.35"
-          width="0.08"
-          color="#1976d2">
-        </a-box>
+```
+embedded
 
-        <!-- ปีกหาง -->
-        <a-box
-          position="0 0 0.65"
-          depth="0.2"
-          height="0.05"
-          width="0.65"
-          color="#1976d2">
-        </a-box>
+vr-mode-ui="enabled: false"
 
-        <!-- จมูก -->
-        <a-cone
-          position="0 0 -0.9"
-          rotation="90 0 0"
-          radius-bottom="0.15"
-          radius-top="0"
-          height="0.35"
-          color="#ffffff">
-        </a-cone>
-      </a-entity>
+renderer="
+  antialias: true;
+  alpha: true;
+  logarithmicDepthBuffer: true;
+  colorManagement: true;
+"
+
+arjs="
+  sourceType: webcam;
+  debugUIEnabled: false;
+
+  sourceWidth: 1280;
+  sourceHeight: 720;
+
+  displayWidth: 1280;
+  displayHeight: 720;
+">
 
 
-      <!-- เครื่องบินลำที่ 2 -->
-      <a-entity
-        id="plane2"
-        position="0 1.1 0"
-        scale="0.38 0.38 0.38"
-        rotation="0 120 0">
+<!-- ==========================================
+     HIRO MARKER
+========================================== -->
 
-        <a-box
-          depth="1.6"
-          height="0.18"
-          width="0.22"
-          color="#eeeeee">
-        </a-box>
+<a-marker
 
-        <a-box
-          position="0 0 0"
-          depth="0.25"
-          height="0.08"
-          width="1.8"
-          color="#f44336">
-        </a-box>
+  id="hiroMarker"
 
-        <a-box
-          position="0 0.08 0.65"
-          depth="0.35"
-          height="0.35"
-          width="0.08"
-          color="#c62828">
-        </a-box>
+  preset="hiro"
 
-        <a-box
-          position="0 0 0.65"
-          depth="0.2"
-          height="0.05"
-          width="0.65"
-          color="#c62828">
-        </a-box>
+  emitevents="true"
 
-        <a-cone
-          position="0 0 -0.9"
-          rotation="90 0 0"
-          radius-bottom="0.15"
-          radius-top="0"
-          height="0.35"
-          color="#ffffff">
-        </a-cone>
-      </a-entity>
+  smooth="true"
+
+  smoothCount="5"
+
+  smoothTolerance="0.01"
+
+  smoothThreshold="2">
 
 
-      <!-- เครื่องบินลำที่ 3 -->
-      <a-entity
-        id="plane3"
-        position="0 1.4 0"
-        scale="0.32 0.32 0.32"
-        rotation="0 240 0">
+  <!-- ========================================
+       PLANE 1
+  ========================================= -->
 
-        <a-box
-          depth="1.6"
-          height="0.18"
-          width="0.22"
-          color="#eeeeee">
-        </a-box>
+  <a-entity
 
-        <a-box
-          position="0 0 0"
-          depth="0.25"
-          height="0.08"
-          width="1.8"
-          color="#4caf50">
-        </a-box>
+    id="plane1"
 
-        <a-box
-          position="0 0.08 0.65"
-          depth="0.35"
-          height="0.35"
-          width="0.08"
-          color="#2e7d32">
-        </a-box>
+    position="0 0.8 0"
 
-        <a-box
-          position="0 0 0.65"
-          depth="0.2"
-          height="0.05"
-          width="0.65"
-          color="#2e7d32">
-        </a-box>
+    scale="0.40 0.40 0.40">
 
-        <a-cone
-          position="0 0 -0.9"
-          rotation="90 0 0"
-          radius-bottom="0.15"
-          radius-top="0"
-          height="0.35"
-          color="#ffffff">
-        </a-cone>
-      </a-entity>
 
-    </a-marker>
+    <!-- ลำตัว -->
 
-    <!-- กล้อง AR -->
-    <a-entity camera></a-entity>
+    <a-box
+
+      position="0 0 0"
+
+      depth="1.6"
+
+      height="0.18"
+
+      width="0.22"
+
+      color="#eeeeee">
+
+    </a-box>
+
+
+    <!-- ปีก -->
+
+    <a-box
+
+      position="0 0 0"
+
+      depth="0.25"
+
+      height="0.08"
+
+      width="1.8"
+
+      color="#2196f3">
+
+    </a-box>
+
+
+    <!-- หางตั้ง -->
+
+    <a-box
+
+      position="0 0.08 0.65"
+
+      depth="0.35"
+
+      height="0.35"
+
+      width="0.08"
+
+      color="#1976d2">
+
+    </a-box>
+
+
+    <!-- ปีกหาง -->
+
+    <a-box
+
+      position="0 0 0.65"
+
+      depth="0.2"
+
+      height="0.05"
+
+      width="0.65"
+
+      color="#1976d2">
+
+    </a-box>
+
+
+    <!-- จมูก -->
+
+    <a-cone
+
+      position="0 0 -0.9"
+
+      rotation="90 0 0"
+
+      radius-bottom="0.15"
+
+      radius-top="0"
+
+      height="0.35"
+
+      color="#ffffff">
+
+    </a-cone>
+
+  </a-entity>
+
+
+
+  <!-- ========================================
+       PLANE 2
+  ========================================= -->
+
+  <a-entity
+
+    id="plane2"
+
+    position="0 1.1 0"
+
+    scale="0.34 0.34 0.34">
+
+
+    <a-box
+
+      depth="1.6"
+
+      height="0.18"
+
+      width="0.22"
+
+      color="#eeeeee">
+
+    </a-box>
+
+
+    <a-box
+
+      position="0 0 0"
+
+      depth="0.25"
+
+      height="0.08"
+
+      width="1.8"
+
+      color="#f44336">
+
+    </a-box>
+
+
+    <a-box
+
+      position="0 0.08 0.65"
+
+      depth="0.35"
+
+      height="0.35"
+
+      width="0.08"
+
+      color="#c62828">
+
+    </a-box>
+
+
+    <a-box
+
+      position="0 0 0.65"
+
+      depth="0.2"
+
+      height="0.05"
+
+      width="0.65"
+
+      color="#c62828">
+
+    </a-box>
+
+
+    <a-cone
+
+      position="0 0 -0.9"
+
+      rotation="90 0 0"
+
+      radius-bottom="0.15"
+
+      radius-top="0"
+
+      height="0.35"
+
+      color="#ffffff">
+
+    </a-cone>
+
+  </a-entity>
+
+
+
+  <!-- ========================================
+       PLANE 3
+  ========================================= -->
+
+  <a-entity
+
+    id="plane3"
+
+    position="0 1.4 0"
+
+    scale="0.30 0.30 0.30">
+
+
+    <a-box
+
+      depth="1.6"
+
+      height="0.18"
+
+      width="0.22"
+
+      color="#eeeeee">
+
+    </a-box>
+
+
+    <a-box
+
+      position="0 0 0"
+
+      depth="0.25"
+
+      height="0.08"
+
+      width="1.8"
+
+      color="#4caf50">
+
+    </a-box>
+
+
+    <a-box
+
+      position="0 0.08 0.65"
+
+      depth="0.35"
+
+      height="0.35"
+
+      width="0.08"
+
+      color="#2e7d32">
+
+    </a-box>
+
+
+    <a-box
+
+      position="0 0 0.65"
+
+      depth="0.2"
+
+      height="0.05"
+
+      width="0.65"
+
+      color="#2e7d32">
+
+    </a-box>
+
+
+    <a-cone
+
+      position="0 0 -0.9"
+
+      rotation="90 0 0"
+
+      radius-bottom="0.15"
+
+      radius-top="0"
+
+      height="0.35"
+
+      color="#ffffff">
+
+    </a-cone>
+
+  </a-entity>
+
+
+</a-marker>
+
+
+
+<!-- ==========================================
+     CAMERA
+========================================== -->
+
+<a-entity
+
+  camera="
+
+    fov: 60;
+
+    near: 0.1;
+
+    far: 1000;
+
+  "
+
+  look-controls="enabled: false">
+
+</a-entity>
+```
 
   </a-scene>
 
-
 <script>
 
-  // ==========================================
-  // ตั้งค่า
-  // ==========================================
 
-  let speed = 1;
+/* =====================================================
+   ตัวแปร
+===================================================== */
 
-  let time = 0;
+let speed = 1;
 
-  const planes = [
-    document.querySelector("#plane1"),
-    document.querySelector("#plane2"),
-    document.querySelector("#plane3")
-  ];
+let time = 0;
 
-  const speedText = document.querySelector("#speedText");
-  const speedButton = document.querySelector("#speedButton");
+let markerDetected = false;
 
 
-  // ==========================================
-  // เพิ่มความเร็ว
-  // ==========================================
+const planes = [
 
-  speedButton.addEventListener("click", function () {
+  document.querySelector("#plane1"),
+
+  document.querySelector("#plane2"),
+
+  document.querySelector("#plane3")
+
+];
+
+
+const speedText =
+  document.querySelector("#speedText");
+
+
+const speedButton =
+  document.querySelector("#speedButton");
+
+
+const cameraStatus =
+  document.querySelector("#cameraStatus");
+
+
+const marker =
+  document.querySelector("#hiroMarker");
+
+
+
+/* =====================================================
+   ปุ่มเพิ่มความเร็ว
+===================================================== */
+
+speedButton.addEventListener(
+
+  "click",
+
+  function() {
 
     speed += 0.5;
 
+
     if (speed > 5) {
+
       speed = 1;
+
     }
 
-    speedText.innerText = "ความเร็ว: " + speed.toFixed(1) + "x";
 
-  });
+    speedText.innerText =
+      "ความเร็ว: " +
+      speed.toFixed(1) +
+      "x";
+
+  }
+
+);
 
 
-  // ==========================================
-  // คำนวณตำแหน่งเส้นทางเลข 8
-  // ==========================================
 
-  function figureEight(t, phase, radiusX, radiusZ) {
+/* =====================================================
+   Hiro Marker Found
+===================================================== */
 
-    /*
-      Parametric figure 8
+marker.addEventListener(
 
-      x = sin(t)
-      z = sin(t) * cos(t)
+  "markerFound",
 
-      ทำให้เกิดรูปเลข 8
-    */
+  function() {
 
-    const x =
-      radiusX *
-      Math.sin(t + phase);
+    markerDetected = true;
 
-    const z =
-      radiusZ *
-      Math.sin(t + phase) *
-      Math.cos(t + phase);
+    speedText.innerText =
+      "พบ Hiro Marker • ความเร็ว: " +
+      speed.toFixed(1) +
+      "x";
 
-    return {
-      x: x,
-      z: z
-    };
+  }
+
+);
+
+
+
+/* =====================================================
+   Hiro Marker Lost
+===================================================== */
+
+marker.addEventListener(
+
+  "markerLost",
+
+  function() {
+
+    markerDetected = false;
+
+    speedText.innerText =
+      "ค้นหา Hiro Marker...";
+
+  }
+
+);
+
+
+
+/* =====================================================
+   เส้นทางเลข 8
+===================================================== */
+
+function figureEight(
+
+  t,
+
+  phase,
+
+  radiusX,
+
+  radiusZ
+
+) {
+
+  const x =
+
+    radiusX *
+    Math.sin(
+      t + phase
+    );
+
+
+  const z =
+
+    radiusZ *
+    Math.sin(
+      t + phase
+    ) *
+    Math.cos(
+      t + phase
+    );
+
+
+  return {
+
+    x: x,
+
+    z: z
+
+  };
+
+}
+
+
+
+/* =====================================================
+   Animation
+===================================================== */
+
+function animate() {
+
+
+  requestAnimationFrame(
+    animate
+  );
+
+
+  if (!markerDetected) {
+
+    return;
+
   }
 
 
-  // ==========================================
-  // Animation
-  // ==========================================
-
-  function animate() {
-
-    requestAnimationFrame(animate);
-
-    time += 0.015 * speed;
+  time +=
+    0.015 * speed;
 
 
-    planes.forEach((plane, index) => {
+  planes.forEach(
 
-      // ให้แต่ละลำบินเหลื่อมกัน
+    function(
+      plane,
+      index
+    ) {
+
+
       const phase =
-        index * (Math.PI * 2 / 3);
 
-      const pos =
-        figureEight(
-          time,
-          phase,
-          2.2,
-          2.0
+        index *
+        (
+          Math.PI * 2 / 3
         );
 
 
-      // ความสูงแต่ละลำไม่เท่ากัน
+      /*
+         ลดขนาดวงบิน
+         ให้เหมาะกับ Marker
+      */
+
+      const pos =
+
+        figureEight(
+
+          time,
+
+          phase,
+
+          1.45,
+
+          1.15
+
+        );
+
+
+      /*
+         ความสูง
+      */
+
       const height =
-        0.9 +
-        index * 0.35 +
-        Math.sin(time * 2 + phase) * 0.15;
+
+        0.8 +
+
+        index * 0.30 +
+
+        Math.sin(
+          time * 2 +
+          phase
+        ) * 0.08;
 
 
-      // ตั้งตำแหน่ง
-      plane.object3D.position.x = pos.x;
-      plane.object3D.position.y = height;
-      plane.object3D.position.z = pos.z;
+      plane.object3D.position.x =
+        pos.x;
 
 
-      // =====================================
-      // คำนวณทิศทางการบิน
-      // =====================================
+      plane.object3D.position.y =
+        height;
 
-      const nextT =
-        time + 0.01;
+
+      plane.object3D.position.z =
+        pos.z;
+
+
+      /*
+         หาจุดด้านหน้า
+      */
 
       const next =
+
         figureEight(
-          nextT,
+
+          time + 0.03,
+
           phase,
-          2.2,
-          2.0
+
+          1.45,
+
+          1.15
+
         );
 
 
       const dx =
         next.x - pos.x;
 
+
       const dz =
         next.z - pos.z;
 
 
       const angle =
-        Math.atan2(dx, dz);
+        Math.atan2(
+          dx,
+          dz
+        );
 
 
-      // หมุนเครื่องบินตามทิศทาง
       plane.object3D.rotation.y =
         angle;
 
 
-      // เอียงเครื่องบินตอนเลี้ยว
-      const banking =
-        Math.sin(time + phase) * 0.25;
+      /*
+         เอียงตอนเข้าโค้ง
+      */
 
       plane.object3D.rotation.z =
-        banking;
 
-    });
+        Math.sin(
+          time + phase
+        ) * 0.22;
+
+    }
+
+  );
+
+}
+
+
+animate();
+
+
+
+/* =====================================================
+   บังคับกล้อง Zoom 1x
+===================================================== */
+
+async function forceCameraZoom1x() {
+
+  try {
+
+    const video =
+      document.querySelector("video");
+
+
+    /*
+       AR.js ยังไม่เปิดกล้อง
+    */
+
+    if (
+      !video ||
+      !video.srcObject
+    ) {
+
+      setTimeout(
+        forceCameraZoom1x,
+        500
+      );
+
+      return;
+
+    }
+
+
+    const tracks =
+      video.srcObject
+        .getVideoTracks();
+
+
+    if (!tracks.length) {
+
+      return;
+
+    }
+
+
+    const track =
+      tracks[0];
+
+
+    const capabilities =
+      track.getCapabilities();
+
+
+    console.log(
+      "Camera capabilities:",
+      capabilities
+    );
+
+
+    /*
+       ตรวจสอบว่ากล้อง
+       รองรับ Zoom หรือไม่
+    */
+
+    if (capabilities.zoom) {
+
+
+      const minZoom =
+        capabilities.zoom.min;
+
+
+      const maxZoom =
+        capabilities.zoom.max;
+
+
+      /*
+         พยายามกำหนด 1x
+      */
+
+      const targetZoom =
+
+        Math.max(
+
+          minZoom,
+
+          Math.min(
+            1,
+            maxZoom
+          )
+
+        );
+
+
+      await track.applyConstraints({
+
+        advanced: [
+
+          {
+
+            zoom: targetZoom
+
+          }
+
+        ]
+
+      });
+
+
+      cameraStatus.innerText =
+        "📷 กล้อง Zoom " +
+        targetZoom.toFixed(1) +
+        "x";
+
+
+      console.log(
+        "Camera zoom set to:",
+        targetZoom
+      );
+
+
+    }
+
+    else {
+
+      cameraStatus.innerText =
+        "📷 กล้องไม่รองรับการควบคุม Zoom";
+
+    }
 
   }
 
+  catch(error) {
 
-  // เริ่ม Animation
-  animate();
+    console.error(
+      "Zoom error:",
+      error
+    );
 
 
-  // ==========================================
-  // เมื่อพบ Hiro Marker
-  // ==========================================
+    cameraStatus.innerText =
+      "📷 ใช้ค่ากล้องเริ่มต้น";
 
-  const marker =
-    document.querySelector("#hiroMarker");
+  }
 
-  marker.addEventListener(
-    "markerFound",
-    function () {
+}
 
-      speedText.innerText =
-        "พบ Hiro Marker • ความเร็ว: " +
-        speed.toFixed(1) +
-        "x";
+
+
+/* =====================================================
+   รอ AR.js เปิดกล้อง
+===================================================== */
+
+setTimeout(
+
+  forceCameraZoom1x,
+
+  2000
+
+);
+
+
+/*
+   ลองตั้งซ้ำอีกครั้ง
+   เผื่อ AR.js เปิดกล้องช้า
+*/
+
+setTimeout(
+
+  forceCameraZoom1x,
+
+  4000
+
+);
+
+
+setTimeout(
+
+  forceCameraZoom1x,
+
+  6000
+
+);
+
+
+
+/* =====================================================
+   ป้องกัน Pinch Zoom หน้าเว็บ
+===================================================== */
+
+document.addEventListener(
+
+  "touchmove",
+
+  function(e) {
+
+    if (
+      e.touches.length > 1
+    ) {
+
+      e.preventDefault();
 
     }
-  );
+
+  },
+
+  {
+    passive: false
+  }
+
+);
 
 
-  marker.addEventListener(
-    "markerLost",
-    function () {
 
-      speedText.innerText =
-        "ค้นหา Hiro Marker...";
+/* =====================================================
+   ป้องกัน Double Tap Zoom
+===================================================== */
+
+let lastTouchTime = 0;
+
+
+document.addEventListener(
+
+  "touchend",
+
+  function(e) {
+
+    const now =
+      Date.now();
+
+
+    if (
+      now - lastTouchTime < 300
+    ) {
+
+      e.preventDefault();
 
     }
-  );
+
+
+    lastTouchTime = now;
+
+  },
+
+  false
+
+);
 
 </script>
 
