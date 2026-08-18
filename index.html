@@ -84,30 +84,25 @@
       preset="hiro"
       emitevents="true">
 
-      <!-- เครื่องบินลำที่ 1 -->
-      <a-entity
-        id="plane1"
-        position="0 0.8 0"
-        scale="0.45 0.45 0.45">
+     <!-- เครื่องบินลำที่ 1 -->
+<a-entity
+  id="plane1"
+  position="0 0.7 0"
+  scale="0.22 0.22 0.22">
 
-        <!-- ลำตัว -->
-        <a-box
-          position="0 0 0"
-          depth="1.6"
-          height="0.018"
-          width="0.022"
-          color="#eeeeee">
-        </a-box>
+<!-- เครื่องบินลำที่ 2 -->
+<a-entity
+  id="plane2"
+  position="0 0.9 0"
+  scale="0.20 0.20 0.20"
+  rotation="0 120 0">
 
-        <!-- ปีก -->
-        <a-box
-          position="0 0 0"
-          depth="0.25"
-          height="0.008"
-          width=".18"
-          color="#2196f3">
-        </a-box>
-
+ <!-- เครื่องบินลำที่ 3 -->
+<a-entity
+  id="plane3"
+  position="0 1.1 0"
+  scale="0.18 0.18 0.18"
+  rotation="0 240 0">
         <!-- หาง -->
         <a-box
           position="0 0.08 0.65"
@@ -332,16 +327,16 @@
         figureEight(
           time,
           phase,
-          2.2,
-          2.0
+          1.25,
+          1.05
         );
 
 
       // ความสูงแต่ละลำไม่เท่ากัน
-      const height =
-        0.9 +
-        index * 0.35 +
-        Math.sin(time * 2 + phase) * 0.15;
+  const height =
+  0.65 +
+  index * 0.20 +
+  Math.sin(time * 2 + phase) * 0.08;
 
 
       // ตั้งตำแหน่ง
