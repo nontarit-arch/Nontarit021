@@ -1,521 +1,198 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HDD Factory Digital Twin - Telemetry Dashboard</title>
-  <!-- A-Frame 1.4.2 CDN -->
-  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-  
-  <style>
-    /* Overlay Styling for Digital Twin Telemetry Dashboard */
-    #dashboard {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      background: rgba(15, 23, 42, 0.9);
-      color: #F8FAFC;
-      padding: 20px;
-      border-radius: 12px;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      z-index: 999;
-      width: 320px;
-      backdrop-filter: blur(8px);
-    }
-    #dashboard h2 {
-      margin: 0 0 12px 0;
-      font-size: 1.15rem;
-      color: #38BDF8;
-      border-bottom: 1px solid rgba(56, 189, 248, 0.3);
-      padding-bottom: 6px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .status-badge {
-      font-size: 0.75rem;
-      padding: 3px 8px;
-      border-radius: 12px;
-      font-weight: bold;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .status-normal { background: #27AE60; color: #FFF; }
-    .status-warning { background: #F39C12; color: #FFF; }
-    .status-alarm { background: #E74C3C; color: #FFF; }
-
-    .metric-row {
-      margin: 12px 0;
-    }
-    .metric-header {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.85rem;
-      color: #94A3B8;
-      margin-bottom: 4px;
-    }
-    .metric-value {
-      font-weight: bold;
-      color: #F8FAFC;
-    }
-    
-    /* Mini Trend Bar Visualization */
-    .trend-bar-bg {
-      width: 100%;
-      height: 8px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
-      overflow: hidden;
-    }
-    .trend-bar-fill {
-      height: 100%;
-      width: 0%;
-      border-radius: 4px;
-      transition: width 0.4s ease, background-color 0.4s ease;
-    }
-
-    .meta-info {
-      margin-top: 16px;
-      padding-top: 10px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.8rem;
-      color: #CBD5E1;
-    }
-    .hint {
-      margin-top: 12px;
-      font-size: 0.75rem;
-      color: #64748B;
-      font-style: italic;
-      text-align: center;
-    }
-  </style>
-
-  <script>
-    /* =========================================================================
-       GLOBAL STATE & TELEMETRY SIMULATION
-       ========================================================================= */
-
-    const machineState = {
-      m01: { name: "M01: Disk Weighing", temp: 45, vib: 1.5, rpm: 1800, status: "Normal", alarmCount: 0 },
-      m02: { name: "M02: Robotic Assembly", temp: 52, vib: 2.1, rpm: 2100, status: "Normal", alarmCount: 0 },
-      m03: { name: "M03: Spin & Test", temp: 48, vib: 1.8, rpm: 1950, status: "Normal", alarmCount: 0 }
-    };
-
-    let selectedMachineKey = 'm01';
-
-    // Status Evaluation Logic
-    function evaluateStatus(temp, vib, rpm) {
-      let isAlarm = (temp >= 75) || (vib >= 6.0) || (rpm < 700 || rpm >= 2800);
-      if (isAlarm) return "Alarm";
-
-      let isWarning = (temp >= 60 && temp < 75) || 
-                      (vib >= 4.0 && vib < 6.0) || 
-                      (rpm >= 700 && rpm <= 999) || 
-                      (rpm >= 2400 && rpm <= 2799);
-      if (isWarning) return "Warning";
-
-      return "Normal";
-    }
-
-    // Color mapper for Status
-    function getStatusColor(status) {
-      if (status === "Alarm") return "#E74C3C";   // Red
-      if (status === "Warning") return "#F39C12"; // Yellow
-      return "#27AE60";                           // Green
-    }
-
-    // 1-Second Telemetry Simulation Loop
-    setInterval(() => {
-      Object.keys(machineState).forEach(key => {
-        const m = machineState[key];
-        
-        // Random Walk Noise
-        m.temp = Math.min(85, Math.max(35, m.temp + (Math.random() * 4 - 1.9)));
-        m.vib = Math.min(7.5, Math.max(0.5, m.vib + (Math.random() * 0.6 - 0.28)));
-        m.rpm = Math.min(3000, Math.max(500, m.rpm + Math.floor(Math.random() * 160 - 75)));
-
-        const newStatus = evaluateStatus(m.temp, m.vib, m.rpm);
-        if (newStatus === "Alarm" && m.status !== "Alarm") {
-          m.alarmCount++;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D HDD Factory Digital Twin</title>
+    <!-- A-Frame Framework for 3D/WebXR -->
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <style>
+        /* Overlay styling for info display when clicking machines */
+        #info-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.85);
+            color: #ffffff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            border: 1px solid #38bdf8;
+            pointer-events: none;
+            display: none;
+            text-align: center;
+            z-index: 999;
         }
-        m.status = newStatus;
-
-        // Update Machine Indicator Color in 3D Scene
-        const machineEl = document.getElementById(key + "-status-light");
-        if (machineEl) {
-          machineEl.setAttribute("material", "color", getStatusColor(m.status));
-          machineEl.setAttribute("material", "emissive", getStatusColor(m.status));
-        }
-      });
-
-      // Update Dashboard Overlay if active
-      updateDashboardUI();
-    }, 1000);
-
-    function updateDashboardUI() {
-      const data = machineState[selectedMachineKey];
-      if (!data) return;
-
-      document.getElementById('dash-title').innerText = data.name;
-      
-      const badge = document.getElementById('dash-status');
-      badge.innerText = data.status;
-      badge.className = `status-badge status-${data.status.toLowerCase()}`;
-
-      // Temperature Display & Bar (Range: 30°C - 90°C)
-      document.getElementById('val-temp').innerText = `${data.temp.toFixed(1)} °C`;
-      const tempPct = Math.min(100, Math.max(0, ((data.temp - 30) / 60) * 100));
-      const tempBar = document.getElementById('bar-temp');
-      tempBar.style.width = `${tempPct}%`;
-      tempBar.style.backgroundColor = getStatusColor(data.temp >= 75 ? "Alarm" : (data.temp >= 60 ? "Warning" : "Normal"));
-
-      // Vibration Display & Bar (Range: 0 - 8 mm/s)
-      document.getElementById('val-vib').innerText = `${data.vib.toFixed(2)} mm/s`;
-      const vibPct = Math.min(100, Math.max(0, (data.vib / 8.0) * 100));
-      const vibBar = document.getElementById('bar-vib');
-      vibBar.style.width = `${vibPct}%`;
-      vibBar.style.backgroundColor = getStatusColor(data.vib >= 6.0 ? "Alarm" : (data.vib >= 4.0 ? "Warning" : "Normal"));
-
-      // RPM Display & Bar (Range: 0 - 3000 RPM)
-      document.getElementById('val-rpm').innerText = `${Math.round(data.rpm)} RPM`;
-      const rpmPct = Math.min(100, Math.max(0, (data.rpm / 3000) * 100));
-      const rpmBar = document.getElementById('bar-rpm');
-      rpmBar.style.width = `${rpmPct}%`;
-      const rpmStatus = (data.rpm < 700 || data.rpm >= 2800) ? "Alarm" : ((data.rpm < 1000 || data.rpm >= 2400) ? "Warning" : "Normal");
-      rpmBar.style.backgroundColor = getStatusColor(rpmStatus);
-
-      // Alarm Count
-      document.getElementById('val-alarms').innerText = data.alarmCount;
-    }
-
-    /* =========================================================================
-       CUSTOM A-FRAME COMPONENTS FOR ANIMATION & INTERACTION
-       ========================================================================= */
-
-    // Component: Continuous Conveyor HDD Carrier Motion
-    AFRAME.registerComponent('conveyor-carrier', {
-      schema: {
-        startX: { type: 'number', default: -4.8 },
-        endX: { type: 'number', default: -1.2 },
-        speed: { type: 'number', default: 1.0 }
-      },
-      init: function () {
-        this.currentX = this.data.startX;
-      },
-      tick: function (time, timeDelta) {
-        const deltaSec = timeDelta / 1000;
-        this.currentX += this.data.speed * deltaSec;
-        
-        if (this.currentX >= this.data.endX) {
-          this.currentX = this.data.startX;
-        }
-        
-        const pos = this.el.getAttribute('position');
-        this.el.setAttribute('position', { x: this.currentX, y: pos.y, z: pos.z });
-      }
-    });
-
-    // Component: Robot Arm FK Joint Rotations (Continuous Looping Cycle)
-    AFRAME.registerComponent('robot-kinematics', {
-      schema: {
-        type: { type: 'string', default: 'm01' }
-      },
-      init: function () {
-        this.shoulder = this.el.querySelector('.shoulder');
-        this.elbow = this.el.querySelector('.elbow');
-        this.wrist = this.el.querySelector('.wrist');
-      },
-      tick: function (time) {
-        const t = time / 1000;
-        
-        if (this.data.type === 'm01') {
-          if (this.shoulder) this.shoulder.setAttribute('rotation', `0 ${Math.sin(t * 1.5) * 45} 0`);
-          if (this.elbow) this.elbow.setAttribute('rotation', `${Math.sin(t * 2.0) * 20 - 10} 0 0`);
-          if (this.wrist) this.wrist.setAttribute('rotation', `0 0 ${Math.sin(t * 3.0) * 30}`);
-        } 
-        else if (this.data.type === 'm02') {
-          if (this.shoulder) this.shoulder.setAttribute('rotation', `0 ${Math.cos(t * 1.2) * 60} 0`);
-          if (this.elbow) this.elbow.setAttribute('rotation', `${Math.sin(t * 1.5) * 30 - 25} 0 0`);
-          if (this.wrist) this.wrist.setAttribute('rotation', `${Math.cos(t * 2.5) * 40} 0 0`);
-        } 
-        else if (this.data.type === 'm03') {
-          if (this.shoulder) this.shoulder.setAttribute('rotation', `0 ${Math.sin(t * 2.5) * 35} 0`);
-          if (this.elbow) this.elbow.setAttribute('rotation', `${Math.cos(t * 3.0) * 25 - 15} 0 0`);
-          if (this.wrist) this.wrist.setAttribute('rotation', `0 ${Math.sin(t * 4.0) * 45} 0`);
-        }
-      }
-    });
-
-    // Component: Click Interaction to select Machine for Dashboard
-    AFRAME.registerComponent('machine-select', {
-      schema: {
-        key: { type: 'string', default: 'm01' }
-      },
-      init: function () {
-        this.el.addEventListener('click', () => {
-          selectedMachineKey = this.data.key;
-          updateDashboardUI();
-        });
-      }
-    });
-  </script>
+    </style>
 </head>
-
 <body>
-  <!-- 2D Telemetry Dashboard Overlay -->
-  <div id="dashboard">
-    <h2>
-      <span id="dash-title">M01: Disk Weighing</span>
-      <span id="dash-status" class="status-badge status-normal">Normal</span>
-    </h2>
 
-    <!-- Metric 1: Temperature -->
-    <div class="metric-row">
-      <div class="metric-header">
-        <span>Temperature</span>
-        <span id="val-temp" class="metric-value">0.0 °C</span>
-      </div>
-      <div class="trend-bar-bg">
-        <div id="bar-temp" class="trend-bar-fill"></div>
-      </div>
-    </div>
+    <!-- UI Overlay for Click Feedback -->
+    <div id="info-panel">Click a machine to inspect digital twin metrics...</div>
 
-    <!-- Metric 2: Vibration -->
-    <div class="metric-row">
-      <div class="metric-header">
-        <span>Vibration</span>
-        <span id="val-vib" class="metric-value">0.00 mm/s</span>
-      </div>
-      <div class="trend-bar-bg">
-        <div id="bar-vib" class="trend-bar-fill"></div>
-      </div>
-    </div>
+    <script>
+        // Custom Component: Animate HDD Carriers along the conveyor belt (X-axis movement)
+        AFRAME.registerComponent('carrier-conveyor', {
+            schema: { speed: { type: 'number', default: 1.5 } },
+            tick: function (time, timeDelta) {
+                let pos = this.el.getAttribute('position');
+                pos.x += (timeDelta / 1000) * this.data.speed;
+                
+                // Reset position to loop from M01 start (-7.5m) to M03 end (+7.5m)
+                if (pos.x > 7.5) {
+                    pos.x = -7.5;
+                }
+                this.el.setAttribute('position', pos);
+            }
+        });
 
-    <!-- Metric 3: RPM -->
-    <div class="metric-row">
-      <div class="metric-header">
-        <span>Spindle Speed</span>
-        <span id="val-rpm" class="metric-value">0 RPM</span>
-      </div>
-      <div class="trend-bar-bg">
-        <div id="bar-rpm" class="trend-bar-fill"></div>
-      </div>
-    </div>
+        // Custom Component: Machine 01 Blue Robot Arm Pick-and-Place Cycle
+        AFRAME.registerComponent('arm-m01-anim', {
+            tick: function (time) {
+                let t = (time % 4000) / 4000; // 4-second loop cycle
+                let base = this.el.querySelector('.arm-base');
+                let shoulder = this.el.querySelector('.arm-shoulder');
+                let elbow = this.el.querySelector('.arm-elbow');
 
-    <!-- Alarm Counter -->
-    <div class="meta-info">
-      <span>Total Alarms (Session):</span>
-      <strong id="val-alarms" style="color: #E74C3C;">0</strong>
-    </div>
+                if (base && shoulder && elbow) {
+                    // Smooth sinusoidal interpolation for rotation angles
+                    let rotY = Math.sin(t * Math.PI * 2) * 40;
+                    let rotXShoulder = Math.sin(t * Math.PI * 2) * 15 - 10;
+                    let rotXElbow = Math.cos(t * Math.PI * 2) * 20 + 10;
 
-    <div class="hint">Click any machine enclosure in 3D view to inspect.</div>
-  </div>
+                    base.setAttribute('rotation', `0 ${rotY} 0`);
+                    shoulder.setAttribute('rotation', `${rotXShoulder} 0 0`);
+                    elbow.setAttribute('rotation', `${rotXElbow} 0 0`);
+                }
+            }
+        });
 
-  <!-- Main WebXR A-Frame Scene -->
-  <a-scene renderer="antialias: true; colorManagement: true;" background="color: #1E293B">
-    
-    <!-- Camera Rig -->
-    <a-entity id="rig" position="0 2.2 7.5">
-      <a-camera look-controls WASD-controls="fly: false; acceleration: 25">
-        <a-cursor 
-          fuse="false" 
-          raycaster="objects: [.interactive]" 
-          material="color: #38BDF8; shader: flat" 
-          geometry="primitive: ring; radiusInner: 0.007; radiusOuter: 0.012">
-        </a-cursor>
-      </a-camera>
-    </a-entity>
+        // Custom Component: Machine 02 Orange 3-Joint Robot Assembly Animation Cycle
+        AFRAME.registerComponent('arm-m02-anim', {
+            tick: function (time) {
+                let t = (time % 3000) / 3000; // 3-second loop cycle
+                let base = this.el.querySelector('.arm-base');
+                let shoulder = this.el.querySelector('.arm-shoulder');
+                let elbow = this.el.querySelector('.arm-elbow');
+                let wrist = this.el.querySelector('.arm-wrist');
 
-    <!-- Environment Lighting -->
-    <a-light type="ambient" color="#FFFFFF" intensity="0.45"></a-light>
-    <a-light type="directional" color="#FFFFFF" intensity="0.8" position="-5 10 5" cast-shadow="true"></a-light>
+                if (base && shoulder && elbow && wrist) {
+                    let rotY = Math.sin(t * Math.PI * 2) * 60;
+                    let rotXShoulder = Math.sin(t * Math.PI * 2) * 25 - 15;
+                    let rotXElbow = -Math.abs(Math.sin(t * Math.PI * 2)) * 30;
+                    let rotXWrist = Math.sin(t * Math.PI * 2) * 20;
 
-    <!-- Ceiling Lights -->
-    <a-entity id="ceiling-lights">
-      <a-box position="-6 5.8 0" width="3" height="0.1" depth="1" material="color: #E0F7FA; emissive: #E0F7FA; emissiveIntensity: 0.6"></a-box>
-      <a-box position="0 5.8 0" width="3" height="0.1" depth="1" material="color: #E0F7FA; emissive: #E0F7FA; emissiveIntensity: 0.6"></a-box>
-      <a-box position="6 5.8 0" width="3" height="0.1" depth="1" material="color: #E0F7FA; emissive: #E0F7FA; emissiveIntensity: 0.6"></a-box>
-    </a-entity>
+                    base.setAttribute('rotation', `0 ${rotY} 0`);
+                    shoulder.setAttribute('rotation', `${rotXShoulder} 0 0`);
+                    elbow.setAttribute('rotation', `${rotXElbow} 0 0`);
+                    wrist.setAttribute('rotation', `${rotXWrist} 0 0`);
+                }
+            }
+        });
 
-    <!-- Factory Enclosure Walls -->
-    <a-plane position="0 3 -6" width="22" height="6" material="color: #34495E; side: double"></a-plane>
-    <a-plane position="-11 3 0" rotation="0 90 0" width="12" height="6" material="color: #2C3E50; side: double"></a-plane>
-    <a-plane position="11 3 0" rotation="0 -90 0" width="12" height="6" material="color: #2C3E50; side: double"></a-plane>
+        // Custom Component: Machine 03 Compact Yellow Loader Arm Animation Cycle
+        AFRAME.registerComponent('arm-m03-anim', {
+            tick: function (time) {
+                let t = (time % 2500) / 2500; // 2.5-second loop cycle
+                let base = this.el.querySelector('.arm-base');
+                let elbow = this.el.querySelector('.arm-elbow');
 
-    <!-- Gray Industrial Floor with 1m Grid Helper -->
-    <a-plane id="floor" position="0 0 0" rotation="-90 0 0" width="22" height="12" material="color: #2C3E50"></a-plane>
-    <a-entity gridhelper="size: 22; divisions: 22; colorCenterLine: #475569; colorGrid: #475569" position="0 0.005 0"></a-entity>
+                if (base && elbow) {
+                    let rotY = Math.cos(t * Math.PI * 2) * 35 + 20;
+                    let rotXElbow = Math.sin(t * Math.PI * 2) * 25;
 
-    <!-- Green Pedestrian Safety Walking Path -->
-    <a-plane position="0 0.01 4.5" rotation="-90 0 0" width="20" height="1.4" material="color: #27AE60"></a-plane>
+                    base.setAttribute('rotation', `0 ${rotY} 0`);
+                    elbow.setAttribute('rotation', `${rotXElbow} 0 0`);
+                }
+            }
+        });
 
-    <!-- Cyan Material Flow Direction Floor Arrows -->
-    <a-entity id="cyan-arrows">
-      <a-triangle position="-4.5 0.02 2.0" rotation="-90 90 0" vertex-a="0 0.3 0" vertex-b="-0.2 -0.3 0" vertex-c="0.2 -0.3 0" material="color: #00E5FF; emissive: #00E5FF; emissiveIntensity: 0.3"></a-triangle>
-      <a-triangle position="-1.5 0.02 2.0" rotation="-90 90 0" vertex-a="0 0.3 0" vertex-b="-0.2 -0.3 0" vertex-c="0.2 -0.3 0" material="color: #00E5FF; emissive: #00E5FF; emissiveIntensity: 0.3"></a-triangle>
-      <a-triangle position="1.5 0.02 2.0" rotation="-90 90 0" vertex-a="0 0.3 0" vertex-b="-0.2 -0.3 0" vertex-c="0.2 -0.3 0" material="color: #00E5FF; emissive: #00E5FF; emissiveIntensity: 0.3"></a-triangle>
-      <a-triangle position="4.5 0.02 2.0" rotation="-90 90 0" vertex-a="0 0.3 0" vertex-b="-0.2 -0.3 0" vertex-c="0.2 -0.3 0" material="color: #00E5FF; emissive: #00E5FF; emissiveIntensity: 0.3"></a-triangle>
-    </a-entity>
+        // Interactive Machine Click Handler
+        AFRAME.registerComponent('machine-interactive', {
+            schema: { name: { type: 'string', default: 'Machine' } },
+            init: function () {
+                let el = this.el;
+                let name = this.data.name;
+                let panel = document.getElementById('info-panel');
 
-    <!-- Machine Safety Zone Borders -->
-    <a-plane position="-6 0.01 0" rotation="-90 0 0" width="3.4" height="3.0" material="color: #F39C12; wireframe: true; wireframeLinewidth: 3"></a-plane>
-    <a-plane position="0 0.01 0" rotation="-90 0 0" width="3.8" height="3.0" material="color: #F39C12; wireframe: true; wireframeLinewidth: 3"></a-plane>
-    <a-plane position="6 0.01 0" rotation="-90 0 0" width="3.4" height="3.0" material="color: #F39C12; wireframe: true; wireframeLinewidth: 3"></a-plane>
+                el.addEventListener('click', function () {
+                    panel.style.display = 'block';
+                    panel.innerHTML = `<strong>[SELECTED TWIN]</strong>: ${name} | Status: OPERATIONAL | Cycle Time: 2.4s`;
+                    setTimeout(() => { panel.style.display = 'none'; }, 4000);
+                });
+            }
+        });
+    </script>
 
-    <!-- =========================================================================
-         MACHINE 01: PRECISION DISK WEIGHING
-         ========================================================================= -->
-    <a-entity id="machine-m01" position="-6 0 0">
-      <!-- Clickable Interactive Outer Frame -->
-      <a-box class="interactive" position="0 1.25 0" width="2.4" height="2.5" depth="2.0" 
-             material="color: #16A085; transparent: true; opacity: 0.3"
-             machine-select="key: m01"></a-box>
-      <!-- Base Chassis -->
-      <a-box position="0 0.4 0" width="2.4" height="0.8" depth="2.0" material="color: #ECF0F1"></a-box>
-      <!-- Scale Platform -->
-      <a-cylinder position="0.5 0.85 0" radius="0.35" height="0.08" material="color: #BDC3C7"></a-cylinder>
+    <!-- 3D Scene Container -->
+    <a-scene background="color: #1A202C">
 
-      <!-- Status Beacon Light Top Tower -->
-      <a-cylinder id="m01-status-light" position="1.0 2.65 0.8" radius="0.08" height="0.3" material="color: #27AE60; emissive: #27AE60; emissiveIntensity: 0.5"></a-cylinder>
-
-      <!-- Robot Arm M01 -->
-      <a-entity position="-0.4 0.8 0" robot-kinematics="type: m01">
-        <a-cylinder radius="0.18" height="0.2" material="color: #1B4F72"></a-cylinder>
-        <a-entity class="shoulder" position="0 0.1 0">
-          <a-sphere radius="0.1" material="color: #2980B9"></a-sphere>
-          <a-box position="0 0.25 0" width="0.08" height="0.5" depth="0.08" material="color: #3498DB"></a-box>
-          <a-entity class="elbow" position="0 0.5 0">
-            <a-sphere radius="0.08" material="color: #2980B9"></a-sphere>
-            <a-box position="0.2 0 0" rotation="0 0 -90" width="0.06" height="0.4" depth="0.06" material="color: #5DADE2"></a-box>
-            <a-entity class="wrist" position="0.4 0 0">
-              <a-cylinder radius="0.04" height="0.08" material="color: #1B4F72"></a-cylinder>
-              <a-box position="0.06 0 0" width="0.04" height="0.06" depth="0.08" material="color: #F1C40F"></a-box>
-            </a-entity>
-          </a-entity>
+        <!-- Camera Rig with WASD & Mouse Look Controls -->
+        <a-entity id="rig" position="0 2.5 7" rotation="-12 0 0">
+            <a-camera look-controls camera>
+                <!-- Raycaster Cursor for Object Interaction -->
+                <a-cursor raycaster="objects: .clickable" material="color: #FFCC00; shader: flat" radius-inner="0.002" radius-outer="0.005"></a-cursor>
+            </a-camera>
         </a-entity>
-      </a-entity>
-    </a-entity>
 
-    <!-- =========================================================================
-         CONVEYOR 1 (Connecting M01 -> M02)
-         ========================================================================= -->
-    <a-entity id="conveyor-1" position="0 0 0">
-      <a-box position="-3 0.85 0" width="3.6" height="0.1" depth="0.5" material="color: #1C2833"></a-box>
-      <a-box position="-3 0.92 0.26" width="3.6" height="0.06" depth="0.02" material="color: #95A5A6"></a-box>
-      <a-box position="-3 0.92 -0.26" width="3.6" height="0.06" depth="0.02" material="color: #95A5A6"></a-box>
-      <a-cylinder position="-4.5 0.4 0" radius="0.04" height="0.8" material="color: #7F8C8D"></a-cylinder>
-      <a-cylinder position="-1.5 0.4 0" radius="0.04" height="0.8" material="color: #7F8C8D"></a-cylinder>
+        <!-- Lighting Setup -->
+        <a-light type="ambient" color="#ffffff" intensity="0.55"></a-light>
+        <a-light type="directional" position="5 10 7" intensity="0.75" cast-shadow="true"></a-light>
 
-      <!-- 3 Moving HDD Carriers -->
-      <a-entity conveyor-carrier="startX: -4.6; endX: -1.4; speed: 0.8" position="-4.6 0.93 0">
-        <a-box width="0.3" height="0.04" depth="0.3" material="color: #7F8C8D"></a-box>
-        <a-cylinder position="0 0.03 0" radius="0.1" height="0.02" material="color: #BDC3C7"></a-cylinder>
-      </a-entity>
-      <a-entity conveyor-carrier="startX: -4.6; endX: -1.4; speed: 0.8" position="-3.5 0.93 0">
-        <a-box width="0.3" height="0.04" depth="0.3" material="color: #7F8C8D"></a-box>
-        <a-cylinder position="0 0.03 0" radius="0.1" height="0.02" material="color: #BDC3C7"></a-cylinder>
-      </a-entity>
-      <a-entity conveyor-carrier="startX: -4.6; endX: -1.4; speed: 0.8" position="-2.4 0.93 0">
-        <a-box width="0.3" height="0.04" depth="0.3" material="color: #7F8C8D"></a-box>
-        <a-cylinder position="0 0.03 0" radius="0.1" height="0.02" material="color: #BDC3C7"></a-cylinder>
-      </a-entity>
-    </a-entity>
-
-    <!-- =========================================================================
-         MACHINE 02: HDD ROBOTIC ASSEMBLY
-         ========================================================================= -->
-    <a-entity id="machine-m02" position="0 0 0">
-      <!-- Clickable Interactive Guarded Frame -->
-      <a-box class="interactive" position="0 1.25 0" width="2.8" height="2.5" depth="2.0" 
-             material="color: #E67E22; transparent: true; opacity: 0.35"
-             machine-select="key: m02"></a-box>
-      <!-- Base Chassis & Jig -->
-      <a-box position="0 0.4 0" width="2.8" height="0.8" depth="2.0" material="color: #2C3E50"></a-box>
-      <a-box position="0.4 0.85 0" width="0.5" height="0.1" depth="0.5" material="color: #7F8C8D"></a-box>
-
-      <!-- Status Beacon Light Top Tower -->
-      <a-cylinder id="m02-status-light" position="1.2 2.65 0.8" radius="0.08" height="0.3" material="color: #27AE60; emissive: #27AE60; emissiveIntensity: 0.5"></a-cylinder>
-
-      <!-- Robot Arm M02 -->
-      <a-entity position="-0.3 0.8 0" robot-kinematics="type: m02">
-        <a-cylinder radius="0.25" height="0.25" material="color: #D35400"></a-cylinder>
-        <a-entity class="shoulder" position="0 0.125 0">
-          <a-sphere radius="0.14" material="color: #E67E22"></a-sphere>
-          <a-box position="0 0.35 0" width="0.12" height="0.7" depth="0.12" material="color: #F39C12"></a-box>
-          <a-entity class="elbow" position="0 0.7 0">
-            <a-sphere radius="0.11" material="color: #D35400"></a-sphere>
-            <a-box position="0.3 0 0" rotation="0 0 -90" width="0.1" height="0.6" depth="0.1" material="color: #F39C12"></a-box>
-            <a-entity class="wrist" position="0.6 0 0">
-              <a-cylinder radius="0.06" height="0.12" material="color: #2C3E50"></a-cylinder>
-              <a-box position="0.08 0 0" width="0.08" height="0.08" depth="0.1" material="color: #16A085"></a-box>
-            </a-entity>
-          </a-entity>
+        <!-- ================= ENVIRONMENT ================= -->
+        <!-- Gray Industrial Floor -->
+        <a-plane position="0 0 0" rotation="-90 0 0" width="22" height="14" color="#33373E" roughness="0.8"></a-plane>
+        
+        <!-- Overhead Ceiling Light Fixtures -->
+        <a-entity id="ceiling-lights">
+            <a-box position="-5 5.8 0" width="3" height="0.1" depth="0.4" color="#FFFFFF" material="emissive: #FFFFFF; emissiveIntensity: 0.8"></a-box>
+            <a-box position="0 5.8 0" width="3" height="0.1" depth="0.4" color="#FFFFFF" material="emissive: #FFFFFF; emissiveIntensity: 0.8"></a-box>
+            <a-box position="5 5.8 0" width="3" height="0.1" depth="0.4" color="#FFFFFF" material="emissive: #FFFFFF; emissiveIntensity: 0.8"></a-box>
         </a-entity>
-      </a-entity>
-    </a-entity>
 
-    <!-- =========================================================================
-         CONVEYOR 2 (Connecting M02 -> M03)
-         ========================================================================= -->
-    <a-entity id="conveyor-2" position="0 0 0">
-      <a-box position="3 0.85 0" width="3.6" height="0.1" depth="0.5" material="color: #1C2833"></a-box>
-      <a-box position="3 0.92 0.26" width="3.6" height="0.06" depth="0.02" material="color: #95A5A6"></a-box>
-      <a-box position="3 0.92 -0.26" width="3.6" height="0.06" depth="0.02" material="color: #95A5A6"></a-box>
-      <a-cylinder position="1.5 0.4 0" radius="0.04" height="0.8" material="color: #7F8C8D"></a-cylinder>
-      <a-cylinder position="4.5 0.4 0" radius="0.04" height="0.8" material="color: #7F8C8D"></a-cylinder>
+        <!-- Blue-Gray Factory Enclosure Walls -->
+        <a-box position="0 3 -6.9" width="22" height="6" depth="0.2" color="#2C3540"></a-box>
+        <a-box position="-10.9 3 0" width="0.2" height="6" depth="14" color="#2C3540"></a-box>
+        <a-box position="10.9 3 0" width="0.2" height="6" depth="14" color="#2C3540"></a-box>
 
-      <!-- 3 Moving HDD Carriers -->
-      <a-entity conveyor-carrier="startX: 1.4; endX: 4.6; speed: 0.8" position="1.4 0.93 0">
-        <a-box width="0.3" height="0.04" depth="0.3" material="color: #7F8C8D"></a-box>
-        <a-box position="0 0.04 0" width="0.2" height="0.04" depth="0.2" material="color: #34495E"></a-box>
-      </a-entity>
-      <a-entity conveyor-carrier="startX: 1.4; endX: 4.6; speed: 0.8" position="2.5 0.93 0">
-        <a-box width="0.3" height="0.04" depth="0.3" material="color: #7F8C8D"></a-box>
-        <a-box position="0 0.04 0" width="0.2" height="0.04" depth="0.2" material="color: #34495E"></a-box>
-      </a-entity>
-      <a-entity conveyor-carrier="startX: 1.4; endX: 4.6; speed: 0.8" position="3.6 0.93 0">
-        <a-box width="0.3" height="0.04" depth="0.3" material="color: #7F8C8D"></a-box>
-        <a-box position="0 0.04 0" width="0.2" height="0.04" depth="0.2" material="color: #34495E"></a-box>
-      </a-entity>
-    </a-entity>
+        <!-- Safety Green Walkway Path -->
+        <a-plane position="0 0.02 3" rotation="-90 0 0" width="20" height="1.6" color="#28A745" opacity="0.85"></a-plane>
 
-    <!-- =========================================================================
-         MACHINE 03: SPIN & FUNCTIONAL TEST
-         ========================================================================= -->
-    <a-entity id="machine-m03" position="6 0 0">
-      <!-- Clickable Interactive Outer Cabinet -->
-      <a-box class="interactive" position="0 1.25 0" width="2.4" height="2.5" depth="2.0" 
-             material="color: #2C3E50; transparent: true; opacity: 0.4"
-             machine-select="key: m03"></a-box>
-      <!-- Base Chassis -->
-      <a-box position="0 0.4 0" width="2.4" height="0.8" depth="2.0" material="color: #1B2A47"></a-box>
-      <!-- Test Bay Spindle -->
-      <a-cylinder position="0.4 0.85 0" radius="0.25" height="0.1" material="color: #34495E"></a-cylinder>
+        <!-- ================= SAFETY ZONES ================= -->
+        <a-plane position="-5.5 0.02 0" rotation="-90 0 0" width="3.2" height="3.2" color="#FFCC00" opacity="0.4"></a-plane>
+        <a-plane position="0 0.02 0" rotation="-90 0 0" width="3.2" height="3.2" color="#FFCC00" opacity="0.4"></a-plane>
+        <a-plane position="5.5 0.02 0" rotation="-90 0 0" width="3.2" height="3.2" color="#FFCC00" opacity="0.4"></a-plane>
 
-      <!-- Status Beacon Light Top Tower -->
-      <a-cylinder id="m03-status-light" position="1.0 2.65 0.8" radius="0.08" height="0.3" material="color: #27AE60; emissive: #27AE60; emissiveIntensity: 0.5"></a-cylinder>
+        <!-- ================= CONVEYOR BELT SYSTEM ================= -->
+        <a-entity id="conveyors">
+            <!-- Conveyor Line 1 (Connecting M01 to M02) -->
+            <a-box position="-2.75 0.85 0" width="3.0" height="0.15" depth="0.5" color="#1C2833"></a-box>
+            <a-cylinder position="-4.0 0.42 0" radius="0.04" height="0.85" color="#7F8C8D"></a-cylinder>
+            <a-cylinder position="-1.5 0.42 0" radius="0.04" height="0.85" color="#7F8C8D"></a-cylinder>
 
-      <!-- Robot Arm M03 -->
-      <a-entity position="-0.3 0.8 0" robot-kinematics="type: m03">
-        <a-cylinder radius="0.18" height="0.2" material="color: #17202A"></a-cylinder>
-        <a-entity class="shoulder" position="0 0.1 0">
-          <a-sphere radius="0.1" material="color: #7F8C8D"></a-sphere>
-          <a-box position="0 0.25 0" width="0.08" height="0.5" depth="0.08" material="color: #95A5A6"></a-box>
-          <a-entity class="elbow" position="0 0.5 0">
-            <a-sphere radius="0.08" material="color: #7F8C8D"></a-sphere>
-            <a-box position="0.2 0 0" rotation="0 0 -90" width="0.06" height="0.4" depth="0.06" material="color: #BDC3C7"></a-box>
-            <a-entity class="wrist" position="0.4 0 0">
-              <a-cylinder radius="0.04" height="0.08" material="color: #E74C3C"></a-cylinder>
+            <!-- Conveyor Line 2 (Connecting M02 to M03) -->
+            <a-box position="2.75 0.85 0" width="3.0" height="0.15" depth="0.5" color="#1C2833"></a-box>
+            <a-cylinder position="1.5 0.42 0" radius="0.04" height="0.85" color="#7F8C8D"></a-cylinder>
+            <a-cylinder position="4.0 0.42 0" radius="0.04" height="0.85" color="#7F8C8D"></a-cylinder>
+
+            <!-- Dynamic Animated HDD Carriers Moving Along Belts -->
+            <a-entity carrier-conveyor="speed: 1.2" position="-7.5 0.96 0">
+                <a-box width="0.35" height="0.04" depth="0.3" color="#D5D8DC"></a-box>
+                <a-cylinder position="0 0.03 0" radius="0.08" height="0.01" color="#A6ACAF"></a-cylinder>
             </a-entity>
-          </a-entity>
+            <a-entity carrier-conveyor="speed: 1.2" position="-2.0 0.96 0">
+                <a-box width="0.35" height="0.04" depth="0.3" color="#D5D8DC"></a-box>
+                <a-cylinder position="0 0.03 0" radius="0.08" height="0.01" color="#A6ACAF"></a-cylinder>
+            </a-entity>
+            <a-entity carrier-conveyor="speed: 1.2" position="3.5 0.96 0">
+                <a-box width="0.35" height="0.04" depth="0.3" color="#D5D8DC"></a-box>
+                <a-cylinder position="0 0.03 0" radius="0.08" height="0.01" color="#A6ACAF"></a-cylinder>
+            </a-entity>
         </a-entity>
-      </a-entity>
-    </a-entity>
 
-  </a-scene>
-</body>
-</html>
+        <!-- ================= MACHINE 01: PRECISION DISK WEIGHING ================= -->
+        <a-entity id="machine-01" position="-5.5 0 0" class="clickable" machine-interactive="name: M01 - Precision Disk Weighing">
+            <!-- Main Machine Body (White & Blue Accent) -->
+            <a-box position="0 0.8 0" width="2
