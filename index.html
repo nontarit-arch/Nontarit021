@@ -60,10 +60,10 @@
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 10px;
+      gap: 16px;
 
       width: 100%;
-      max-width: 480px;
+      max-width: 900px;
 
       padding: 0 12px;
       box-sizing: border-box;
@@ -75,11 +75,11 @@
       flex: 0 1 auto;
 
       border: none;
-      border-radius: 40px;
+      border-radius: 60px;
 
-      /* padding/font ปรับตามความกว้างจอ ไม่ล้นจอเล็ก ไม่เล็กเกินจอใหญ่ */
-      padding: clamp(10px, 2.6vw, 16px) clamp(16px, 4.5vw, 26px);
-      font-size: clamp(13px, 3.6vw, 17px);
+      /* ปุ่มใหญ่ขึ้น ~3 เท่าจากเดิม แต่ยังปรับตามความกว้างจอด้วย clamp() */
+      padding: clamp(30px, 7.8vw, 48px) clamp(48px, 13.5vw, 78px);
+      font-size: clamp(28px, 8vw, 42px);
       font-weight: bold;
 
       background: rgba(0, 0, 0, 0.75);
