@@ -2,113 +2,212 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AR Airplane Figure 8</title>
 
-  <!-- A-Frame -->
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>AR Airplane Figure 8 - 8 Planes</title>
+
+  <!-- =========================================
+       A-FRAME
+  ========================================== -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
 
-  <!-- AR.js -->
+  <!-- =========================================
+       AR.JS
+  ========================================== -->
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/three.js/build/ar-threex-location-only.js"></script>
+
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
 
+
   <style>
-    html, body {
+
+    html,
+    body {
+
       margin: 0;
       padding: 0;
-      width: 30%;
-      height: 30%;
+
+      width: 100%;
+      height: 100%;
+
       overflow: hidden;
+
       font-family: Arial, sans-serif;
+
+      background: transparent;
     }
 
+
+    /* =========================================
+       ปุ่มเพิ่มความเร็ว
+    ========================================== */
+
     #speedButton {
+
       position: fixed;
+
       z-index: 9999;
+
       bottom: 30px;
+
       left: 50%;
+
       transform: translateX(-50%);
 
       padding: 16px 30px;
+
       border: none;
+
       border-radius: 50px;
 
       background: rgba(0, 0, 0, 0.75);
+
       color: white;
 
       font-size: 18px;
+
       font-weight: bold;
 
-      box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+      box-shadow:
+        0 5px 20px rgba(0,0,0,0.4);
+
       cursor: pointer;
 
       -webkit-tap-highlight-color: transparent;
     }
 
+
     #speedButton:active {
-      transform: translateX(-50%) scale(0.95);
+
+      transform:
+        translateX(-50%)
+        scale(0.95);
     }
 
+
+    /* =========================================
+       ข้อความความเร็ว
+    ========================================== */
+
     #speedText {
+
       position: fixed;
+
       z-index: 9999;
+
       top: 20px;
+
       left: 50%;
+
       transform: translateX(-50%);
 
       padding: 8px 16px;
+
       border-radius: 20px;
 
       background: rgba(0,0,0,0.6);
+
       color: white;
 
       font-size: 15px;
+
+      white-space: nowrap;
     }
+
   </style>
+
 </head>
+
 
 <body>
 
-  <div id="speedText">ความเร็ว: 1x</div>
-  <button id="speedButton">✈️ เพิ่มความเร็ว</button>
+
+  <!-- =========================================
+       UI
+  ========================================== -->
+
+  <div id="speedText">
+    ความเร็ว: 1x
+  </div>
+
+
+  <button id="speedButton">
+    ✈️ เพิ่มความเร็ว
+  </button>
+
+
+
+  <!-- =========================================
+       AR SCENE
+  ========================================== -->
 
   <a-scene
+
     embedded
+
     vr-mode-ui="enabled: false"
-    renderer="logarithmicDepthBuffer: true; colorManagement: true"
-    arjs="sourceType: webcam; debugUIEnabled: false;">
 
-    <!-- Hiro Marker -->
+    renderer="
+      logarithmicDepthBuffer: true;
+      colorManagement: true;
+    "
+
+    arjs="
+      sourceType: webcam;
+      debugUIEnabled: false;
+    "
+  >
+
+
+
+    <!-- =======================================
+         HIRO MARKER
+    ======================================== -->
+
     <a-marker
+
       id="hiroMarker"
+
       preset="hiro"
-      emitevents="true">
 
-      <!-- เครื่องบินลำที่ 1 -->
+      emitevents="true"
+    >
+
+
+
+      <!-- =====================================
+           เครื่องบินลำที่ 1
+      ====================================== -->
+
       <a-entity
-        id="plane1"
-        position="0 0.8 0"
-        scale="0.45 0.45 0.45">
 
-        <!-- ลำตัว -->
+        id="plane1"
+
+        position="0 0.65 0"
+
+        scale="0.22 0.22 0.22"
+      >
+
         <a-box
-          position="0 0 0"
           depth="1.6"
           height="0.18"
           width="0.22"
           color="#eeeeee">
         </a-box>
 
-        <!-- ปีก -->
+
         <a-box
-          position="0 0 0"
           depth="0.25"
           height="0.08"
           width="1.8"
           color="#2196f3">
         </a-box>
 
-        <!-- หาง -->
+
         <a-box
           position="0 0.08 0.65"
           depth="0.35"
@@ -117,7 +216,7 @@
           color="#1976d2">
         </a-box>
 
-        <!-- ปีกหาง -->
+
         <a-box
           position="0 0 0.65"
           depth="0.2"
@@ -126,7 +225,7 @@
           color="#1976d2">
         </a-box>
 
-        <!-- จมูก -->
+
         <a-cone
           position="0 0 -0.9"
           rotation="90 0 0"
@@ -135,15 +234,23 @@
           height="0.35"
           color="#ffffff">
         </a-cone>
+
       </a-entity>
 
 
-      <!-- เครื่องบินลำที่ 2 -->
+
+      <!-- =====================================
+           เครื่องบินลำที่ 2
+      ====================================== -->
+
       <a-entity
+
         id="plane2"
-        position="0 1.1 0"
-        scale="0.38 0.38 0.38"
-        rotation="0 120 0">
+
+        position="0 0.77 0"
+
+        scale="0.21 0.21 0.21"
+      >
 
         <a-box
           depth="1.6"
@@ -152,14 +259,15 @@
           color="#eeeeee">
         </a-box>
 
+
         <a-box
-          position="0 0 0"
           depth="0.25"
           height="0.08"
           width="1.8"
           color="#f44336">
         </a-box>
 
+
         <a-box
           position="0 0.08 0.65"
           depth="0.35"
@@ -167,6 +275,7 @@
           width="0.08"
           color="#c62828">
         </a-box>
+
 
         <a-box
           position="0 0 0.65"
@@ -176,6 +285,7 @@
           color="#c62828">
         </a-box>
 
+
         <a-cone
           position="0 0 -0.9"
           rotation="90 0 0"
@@ -184,15 +294,23 @@
           height="0.35"
           color="#ffffff">
         </a-cone>
+
       </a-entity>
 
 
-      <!-- เครื่องบินลำที่ 3 -->
+
+      <!-- =====================================
+           เครื่องบินลำที่ 3
+      ====================================== -->
+
       <a-entity
+
         id="plane3"
-        position="0 1.4 0"
-        scale="0.32 0.32 0.32"
-        rotation="0 240 0">
+
+        position="0 0.89 0"
+
+        scale="0.20 0.20 0.20"
+      >
 
         <a-box
           depth="1.6"
@@ -201,13 +319,14 @@
           color="#eeeeee">
         </a-box>
 
+
         <a-box
-          position="0 0 0"
           depth="0.25"
           height="0.08"
           width="1.8"
           color="#4caf50">
         </a-box>
+
 
         <a-box
           position="0 0.08 0.65"
@@ -217,6 +336,7 @@
           color="#2e7d32">
         </a-box>
 
+
         <a-box
           position="0 0 0.65"
           depth="0.2"
@@ -224,6 +344,7 @@
           width="0.65"
           color="#2e7d32">
         </a-box>
+
 
         <a-cone
           position="0 0 -0.9"
@@ -233,202 +354,647 @@
           height="0.35"
           color="#ffffff">
         </a-cone>
+
       </a-entity>
+
+
+
+      <!-- =====================================
+           เครื่องบินลำที่ 4
+      ====================================== -->
+
+      <a-entity
+
+        id="plane4"
+
+        position="0 1.01 0"
+
+        scale="0.19 0.19 0.19"
+      >
+
+        <a-box
+          depth="1.6"
+          height="0.18"
+          width="0.22"
+          color="#eeeeee">
+        </a-box>
+
+
+        <a-box
+          depth="0.25"
+          height="0.08"
+          width="1.8"
+          color="#ff9800">
+        </a-box>
+
+
+        <a-box
+          position="0 0.08 0.65"
+          depth="0.35"
+          height="0.35"
+          width="0.08"
+          color="#ef6c00">
+        </a-box>
+
+
+        <a-box
+          position="0 0 0.65"
+          depth="0.2"
+          height="0.05"
+          width="0.65"
+          color="#ef6c00">
+        </a-box>
+
+
+        <a-cone
+          position="0 0 -0.9"
+          rotation="90 0 0"
+          radius-bottom="0.15"
+          radius-top="0"
+          height="0.35"
+          color="#ffffff">
+        </a-cone>
+
+      </a-entity>
+
+
+
+      <!-- =====================================
+           เครื่องบินลำที่ 5
+      ====================================== -->
+
+      <a-entity
+
+        id="plane5"
+
+        position="0 1.13 0"
+
+        scale="0.18 0.18 0.18"
+      >
+
+        <a-box
+          depth="1.6"
+          height="0.18"
+          width="0.22"
+          color="#eeeeee">
+        </a-box>
+
+
+        <a-box
+          depth="0.25"
+          height="0.08"
+          width="1.8"
+          color="#9c27b0">
+        </a-box>
+
+
+        <a-box
+          position="0 0.08 0.65"
+          depth="0.35"
+          height="0.35"
+          width="0.08"
+          color="#7b1fa2">
+        </a-box>
+
+
+        <a-box
+          position="0 0 0.65"
+          depth="0.2"
+          height="0.05"
+          width="0.65"
+          color="#7b1fa2">
+        </a-box>
+
+
+        <a-cone
+          position="0 0 -0.9"
+          rotation="90 0 0"
+          radius-bottom="0.15"
+          radius-top="0"
+          height="0.35"
+          color="#ffffff">
+        </a-cone>
+
+      </a-entity>
+
+
+
+      <!-- =====================================
+           เครื่องบินลำที่ 6
+      ====================================== -->
+
+      <a-entity
+
+        id="plane6"
+
+        position="0 1.25 0"
+
+        scale="0.17 0.17 0.17"
+      >
+
+        <a-box
+          depth="1.6"
+          height="0.18"
+          width="0.22"
+          color="#eeeeee">
+        </a-box>
+
+
+        <a-box
+          depth="0.25"
+          height="0.08"
+          width="1.8"
+          color="#00bcd4">
+        </a-box>
+
+
+        <a-box
+          position="0 0.08 0.65"
+          depth="0.35"
+          height="0.35"
+          width="0.08"
+          color="#00838f">
+        </a-box>
+
+
+        <a-box
+          position="0 0 0.65"
+          depth="0.2"
+          height="0.05"
+          width="0.65"
+          color="#00838f">
+        </a-box>
+
+
+        <a-cone
+          position="0 0 -0.9"
+          rotation="90 0 0"
+          radius-bottom="0.15"
+          radius-top="0"
+          height="0.35"
+          color="#ffffff">
+        </a-cone>
+
+      </a-entity>
+
+
+
+      <!-- =====================================
+           เครื่องบินลำที่ 7
+      ====================================== -->
+
+      <a-entity
+
+        id="plane7"
+
+        position="0 1.37 0"
+
+        scale="0.16 0.16 0.16"
+      >
+
+        <a-box
+          depth="1.6"
+          height="0.18"
+          width="0.22"
+          color="#eeeeee">
+        </a-box>
+
+
+        <a-box
+          depth="0.25"
+          height="0.08"
+          width="1.8"
+          color="#795548">
+        </a-box>
+
+
+        <a-box
+          position="0 0.08 0.65"
+          depth="0.35"
+          height="0.35"
+          width="0.08"
+          color="#5d4037">
+        </a-box>
+
+
+        <a-box
+          position="0 0 0.65"
+          depth="0.2"
+          height="0.05"
+          width="0.65"
+          color="#5d4037">
+        </a-box>
+
+
+        <a-cone
+          position="0 0 -0.9"
+          rotation="90 0 0"
+          radius-bottom="0.15"
+          radius-top="0"
+          height="0.35"
+          color="#ffffff">
+        </a-cone>
+
+      </a-entity>
+
+
+
+      <!-- =====================================
+           เครื่องบินลำที่ 8
+      ====================================== -->
+
+      <a-entity
+
+        id="plane8"
+
+        position="0 1.49 0"
+
+        scale="0.15 0.15 0.15"
+      >
+
+        <a-box
+          depth="1.6"
+          height="0.18"
+          width="0.22"
+          color="#eeeeee">
+        </a-box>
+
+
+        <a-box
+          depth="0.25"
+          height="0.08"
+          width="1.8"
+          color="#607d8b">
+        </a-box>
+
+
+        <a-box
+          position="0 0.08 0.65"
+          depth="0.35"
+          height="0.35"
+          width="0.08"
+          color="#455a64">
+        </a-box>
+
+
+        <a-box
+          position="0 0 0.65"
+          depth="0.2"
+          height="0.05"
+          width="0.65"
+          color="#455a64">
+        </a-box>
+
+
+        <a-cone
+          position="0 0 -0.9"
+          rotation="90 0 0"
+          radius-bottom="0.15"
+          radius-top="0"
+          height="0.35"
+          color="#ffffff">
+        </a-cone>
+
+      </a-entity>
+
 
     </a-marker>
 
-    <!-- กล้อง AR -->
+
+    <!-- =========================================
+         CAMERA
+    ========================================== -->
+
     <a-entity camera></a-entity>
 
   </a-scene>
 
 
-<script>
 
-  // ==========================================
-  // ตั้งค่า
-  // ==========================================
+  <script>
 
-  let speed = 1;
+    // =========================================
+    // ตั้งค่าความเร็ว
+    // =========================================
 
-  let time = 0;
+    let speed = 1;
 
-  const planes = [
-    document.querySelector("#plane1"),
-    document.querySelector("#plane2"),
-    document.querySelector("#plane3")
-  ];
-
-  const speedText = document.querySelector("#speedText");
-  const speedButton = document.querySelector("#speedButton");
+    let time = 0;
 
 
-  // ==========================================
-  // เพิ่มความเร็ว
-  // ==========================================
 
-  speedButton.addEventListener("click", function () {
+    // =========================================
+    // เครื่องบินทั้ง 8 ลำ
+    // =========================================
 
-    speed += 0.5;
+    const planes = [
 
-    if (speed > 5) {
-      speed = 1;
-    }
+      document.querySelector("#plane1"),
 
-    speedText.innerText = "ความเร็ว: " + speed.toFixed(1) + "x";
+      document.querySelector("#plane2"),
 
-  });
+      document.querySelector("#plane3"),
 
+      document.querySelector("#plane4"),
 
-  // ==========================================
-  // คำนวณตำแหน่งเส้นทางเลข 8
-  // ==========================================
+      document.querySelector("#plane5"),
 
-  function figureEight(t, phase, radiusX, radiusZ) {
+      document.querySelector("#plane6"),
 
-    /*
-      Parametric figure 8
+      document.querySelector("#plane7"),
 
-      x = sin(t)
-      z = sin(t) * cos(t)
+      document.querySelector("#plane8")
 
-      ทำให้เกิดรูปเลข 8
-    */
-
-    const x =
-      radiusX *
-      Math.sin(t + phase);
-
-    const z =
-      radiusZ *
-      Math.sin(t + phase) *
-      Math.cos(t + phase);
-
-    return {
-      x: x,
-      z: z
-    };
-  }
+    ];
 
 
-  // ==========================================
-  // Animation
-  // ==========================================
 
-  function animate() {
-
-    requestAnimationFrame(animate);
-
-    time += 0.015 * speed;
+    const speedText =
+      document.querySelector("#speedText");
 
 
-    planes.forEach((plane, index) => {
-
-      // ให้แต่ละลำบินเหลื่อมกัน
-      const phase =
-        index * (Math.PI * 2 / 3);
-
-      const pos =
-        figureEight(
-          time,
-          phase,
-          2.2,
-          2.0
-        );
+    const speedButton =
+      document.querySelector("#speedButton");
 
 
-      // ความสูงแต่ละลำไม่เท่ากัน
-      const height =
-        0.9 +
-        index * 0.35 +
-        Math.sin(time * 2 + phase) * 0.15;
+
+    // =========================================
+    // ปุ่มเพิ่มความเร็ว
+    // =========================================
+
+    speedButton.addEventListener(
+      "click",
+      function () {
+
+        speed += 0.5;
 
 
-      // ตั้งตำแหน่ง
-      plane.object3D.position.x = pos.x;
-      plane.object3D.position.y = height;
-      plane.object3D.position.z = pos.z;
+        if (speed > 5) {
+
+          speed = 1;
+
+        }
 
 
-      // =====================================
-      // คำนวณทิศทางการบิน
-      // =====================================
+        speedText.innerText =
+          "ความเร็ว: " +
+          speed.toFixed(1) +
+          "x";
 
-      const nextT =
-        time + 0.01;
-
-      const next =
-        figureEight(
-          nextT,
-          phase,
-          2.2,
-          2.0
-        );
+      }
+    );
 
 
-      const dx =
-        next.x - pos.x;
 
-      const dz =
-        next.z - pos.z;
+    // =========================================
+    // ฟังก์ชันเส้นทางเลข 8
+    // =========================================
 
+    function figureEight(
+      t,
+      phase,
+      radiusX,
+      radiusZ
+    ) {
 
-      const angle =
-        Math.atan2(dx, dz);
-
-
-      // หมุนเครื่องบินตามทิศทาง
-      plane.object3D.rotation.y =
-        angle;
-
-
-      // เอียงเครื่องบินตอนเลี้ยว
-      const banking =
-        Math.sin(time + phase) * 0.25;
-
-      plane.object3D.rotation.z =
-        banking;
-
-    });
-
-  }
+      const x =
+        radiusX *
+        Math.sin(t + phase);
 
 
-  // เริ่ม Animation
-  animate();
+      const z =
+        radiusZ *
+        Math.sin(t + phase) *
+        Math.cos(t + phase);
 
 
-  // ==========================================
-  // เมื่อพบ Hiro Marker
-  // ==========================================
+      return {
 
-  const marker =
-    document.querySelector("#hiroMarker");
+        x: x,
 
-  marker.addEventListener(
-    "markerFound",
-    function () {
+        z: z
 
-      speedText.innerText =
-        "พบ Hiro Marker • ความเร็ว: " +
-        speed.toFixed(1) +
-        "x";
+      };
 
     }
-  );
 
 
-  marker.addEventListener(
-    "markerLost",
-    function () {
 
-      speedText.innerText =
-        "ค้นหา Hiro Marker...";
+    // =========================================
+    // Animation
+    // =========================================
+
+    function animate() {
+
+
+      requestAnimationFrame(
+        animate
+      );
+
+
+      time +=
+        0.015 *
+        speed;
+
+
+
+      planes.forEach(
+        function (
+          plane,
+          index
+        ) {
+
+
+          // ===================================
+          // 8 ลำ
+          // กระจายทุก 45 องศา
+          // ===================================
+
+          const phase =
+            index *
+            (
+              Math.PI * 2 / 8
+            );
+
+
+
+          // ===================================
+          // ขนาดวงบิน
+          // แคบกว่าของเดิม
+          // ===================================
+
+          const pos =
+            figureEight(
+
+              time,
+
+              phase,
+
+              1.10,
+
+              1.00
+
+            );
+
+
+
+          // ===================================
+          // ความสูง
+          // ===================================
+
+          const height =
+
+            0.65 +
+
+            index * 0.12 +
+
+            Math.sin(
+              time * 2 +
+              phase
+            ) * 0.08;
+
+
+
+          // ===================================
+          // ตำแหน่ง
+          // ===================================
+
+          plane.object3D.position.x =
+            pos.x;
+
+
+          plane.object3D.position.y =
+            height;
+
+
+          plane.object3D.position.z =
+            pos.z;
+
+
+
+          // ===================================
+          // คำนวณทิศทาง
+          // ===================================
+
+          const nextT =
+            time + 0.01;
+
+
+
+          const next =
+            figureEight(
+
+              nextT,
+
+              phase,
+
+              1.10,
+
+              1.00
+
+            );
+
+
+
+          const dx =
+            next.x -
+            pos.x;
+
+
+          const dz =
+            next.z -
+            pos.z;
+
+
+
+          const angle =
+            Math.atan2(
+              dx,
+              dz
+            );
+
+
+
+          // ===================================
+          // หมุนเครื่องบิน
+          // ===================================
+
+          plane.object3D.rotation.y =
+            angle;
+
+
+
+          // ===================================
+          // เอียงตอนเลี้ยว
+          // ===================================
+
+          const banking =
+
+            Math.sin(
+              time +
+              phase
+            ) * 0.25;
+
+
+          plane.object3D.rotation.z =
+            banking;
+
+        }
+      );
 
     }
-  );
 
-</script>
+
+
+    // =========================================
+    // เริ่ม Animation
+    // =========================================
+
+    animate();
+
+
+
+    // =========================================
+    // Hiro Marker
+    // =========================================
+
+    const marker =
+      document.querySelector(
+        "#hiroMarker"
+      );
+
+
+
+    marker.addEventListener(
+      "markerFound",
+      function () {
+
+        speedText.innerText =
+
+          "พบ Hiro Marker • ความเร็ว: " +
+
+          speed.toFixed(1) +
+
+          "x";
+
+      }
+    );
+
+
+
+    marker.addEventListener(
+      "markerLost",
+      function () {
+
+        speedText.innerText =
+
+          "ค้นหา Hiro Marker...";
+
+      }
+    );
+
+  </script>
+
 
 </body>
 </html>
