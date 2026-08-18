@@ -1,1254 +1,434 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AR Airplane Figure 8</title>
 
-  <title>Low-Poly HDD Factory Digital Twin</title>
+  <!-- A-Frame -->
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
 
-  <!-- A-Frame is loaded from a CDN. No local libraries are required. -->
-  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+  <!-- AR.js -->
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/three.js/build/ar-threex-location-only.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
 
-  <style>
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
-      background: #111;
-    }
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
 
-    #info {
-      position: fixed;
-      left: 15px;
-      top: 15px;
-      z-index: 10;
-      color: white;
-      background: rgba(15, 25, 35, 0.82);
-      border: 1px solid rgba(255,255,255,0.25);
-      border-radius: 8px;
-      padding: 12px 15px;
-      font-size: 13px;
-      line-height: 1.5;
-      pointer-events: none;
-    }
+    #speedButton {
+      position: fixed;
+      z-index: 9999;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
 
-    #machineInfo {
-      position: fixed;
-      right: 15px;
-      top: 15px;
-      z-index: 10;
-      width: 240px;
-      color: white;
-      background: rgba(15, 25, 35, 0.90);
-      border-radius: 8px;
-      padding: 14px;
-      display: none;
-      pointer-events: none;
-      border-left: 5px solid #2196f3;
-    }
+      padding: 16px 30px;
+      border: none;
+      border-radius: 50px;
 
-    #machineInfo h3 {
-      margin: 0 0 8px 0;
-      font-size: 18px;
-    }
+      background: rgba(0, 0, 0, 0.75);
+      color: white;
 
-    #machineInfo p {
-      margin: 5px 0;
-      font-size: 12px;
-    }
-  </style>
+      font-size: 18px;
+      font-weight: bold;
 
-  <script>
-    /*
-      ------------------------------------------------------------
-      MACHINE CLICK HANDLER
-      ------------------------------------------------------------
-      Clicking a machine displays a short description.
-    */
-    AFRAME.registerComponent("machine-click", {
-      schema: {
-        name: { type: "string" },
-        functionText: { type: "string" },
-        color: { type: "string", default: "#2196f3" }
-      },
+      box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+      cursor: pointer;
 
-      init: function () {
-        const el = this.el;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-        el.addEventListener("click", () => {
-          const panel = document.querySelector("#machineInfo");
+    #speedButton:active {
+      transform: translateX(-50%) scale(0.95);
+    }
 
-          panel.style.display = "block";
-          panel.style.borderLeftColor = this.data.color;
+    #speedText {
+      position: fixed;
+      z-index: 9999;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
 
-          panel.innerHTML =
-            "<h3>" + this.data.name + "</h3>" +
-            "<p>" + this.data.functionText + "</p>" +
-            "<p><strong>Click another machine</strong> to inspect it.</p>";
-        });
+      padding: 8px 16px;
+      border-radius: 20px;
 
-        /*
-          Give the machine a small visual response when the mouse
-          pointer enters/leaves its clickable area.
-        */
-        el.addEventListener("mouseenter", () => {
-          el.setAttribute("material", "opacity", 0.12);
-        });
+      background: rgba(0,0,0,0.6);
+      color: white;
 
-        el.addEventListener("mouseleave", () => {
-          el.setAttribute("material", "opacity", 0.01);
-        });
-      }
-    });
-
-    /*
-      ------------------------------------------------------------
-      CONVEYOR CARRIER
-      ------------------------------------------------------------
-      Each HDD carrier travels from left to right through the
-      three production stations.
-    */
-    AFRAME.registerComponent("carrier-motion", {
-      init: function () {
-        const el = this.el;
-
-        el.addEventListener("animationcomplete", function () {
-          /*
-            Once the carrier reaches the end, start again.
-            This keeps the production line running continuously.
-          */
-          el.setAttribute("position", "-11 0.62 1.05");
-        });
-      }
-    });
-  </script>
+      font-size: 15px;
+    }
+  </style>
 </head>
 
 <body>
 
-  <!-- Simple on-screen instructions -->
-  <div id="info">
-    <strong>HDD FACTORY DIGITAL TWIN</strong><br>
-    Mouse: Look around<br>
-    WASD: Move<br>
-    Click: Inspect a machine
-  </div>
-
-  <!-- Machine information appears when a machine is clicked -->
-  <div id="machineInfo"></div>
-
-  <a-scene
-    background="color: #8b949d"
-    renderer="antialias: true; colorManagement: true"
-    fog="type: linear; color: #7f8992; near: 22; far: 45"
-  >
-
-    <!-- =========================================================
-         LIGHTING
-         ========================================================= -->
-
-    <!-- General industrial ambient light -->
-    <a-entity
-      light="type: ambient; color: #b9c4cf; intensity: 1.2">
-    </a-entity>
-
-    <!-- Main factory directional light -->
-    <a-entity
-      light="type: directional; color: #ffffff; intensity: 1.6"
-      position="0 10 5">
-    </a-entity>
-
-
-    <!-- =========================================================
-         FLOOR
-         ========================================================= -->
-
-    <!-- Main gray industrial floor -->
-    <a-box
-      position="0 -0.15 0"
-      width="24"
-      height="0.3"
-      depth="14"
-      color="#80868c"
-      shadow="receive: true">
-    </a-box>
-
-
-    <!-- =========================================================
-         1-METER FLOOR GRID
-         ========================================================= -->
-
-    <a-entity id="floor-grid">
-
-      <!-- Vertical grid lines -->
-      <a-box position="-12 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="-11 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="-10 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="-9 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="-8 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="-7 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="-6 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="-5 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="-4 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="-3 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="-2 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="-1 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="0 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="1 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="2 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="3 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="4 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="5 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="6 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="7 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="8 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="9 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="10 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="11 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-      <a-box position="12 0.015 0" width="0.018" height="0.025" depth="14" color="#aeb4b9"></a-box>
-
-      <!-- Horizontal grid lines -->
-      <a-box position="0 0.02 -7" width="24" height="0.025" depth="0.018" color="#aeb4b9"></a-box>
-      <a-box position="0 0.02 -6" width="24" height="0.025" depth="0.018" color="#aeb4b9"></a-box>
-      <a-box position="0 0.02 -5" width="24" height="0.025" depth="0.018" color="#aeb4b9"></a-box>
-      <a-box position="0 0.02 -4" width="24" height="0.025" depth="0.018" color="#aeb4b9"></a-box>
-      <a-box position="0 0.02 -3" width="24" height="0.025" depth="0.018" color="#aeb4b9"></a-box>
-      <a-box position="0 0.02 -2" width="24" height="0.025" depth="0.018" color="#aeb4b9"></a-box>
-      <a-box position="0 0.02 -1" width="24" height="0.025" depth="0.018" color="#aeb4b9"></a-box>
-      <a-box position="0 0.02 0" width="24" height="0.025" depth="0.018" color="#aeb4b9"></a-box>
-      <a-box position="0 0.02 1" width="24" height="0.025" depth="0.018" color="#aeb4b9"></a-box>
-      <a-box position="0 0.02 2" width="24" height="0.025" depth="0.018" color="#aeb4b9"></a-box>
-      <a-box position="0 0.02 3" width="24" height="0.025" depth="0.018" color="#aeb4b9"></a-box>
-      <a-box position="0 0.02 4" width="24" height="0.025" depth="0.018" color="#aeb4b9"></a-box>
-      <a-box position="0 0.02 5" width="24" height="0.025" depth="0.018" color="#aeb4b9"></a-box>
-      <a-box position="0 0.02 6" width="24" height="0.025" depth="0.018" color="#aeb4b9"></a-box>
-      <a-box position="0 0.02 7" width="24" height="0.025" depth="0.018" color="#aeb4b9"></a-box>
-
-    </a-entity>
-
-
-    <!-- =========================================================
-         FACTORY WALLS
-         ========================================================= -->
-
-    <!-- Back wall -->
-    <a-box
-      position="0 4.0 -7"
-      width="24"
-      height="8"
-      depth="0.3"
-      color="#536676">
-    </a-box>
-
-    <!-- Left wall -->
-    <a-box
-      position="-12 4 0"
-      width="0.3"
-      height="8"
-      depth="14"
-      color="#43586a">
-    </a-box>
-
-    <!-- Right wall -->
-    <a-box
-      position="12 4 0"
-      width="0.3"
-      height="8"
-      depth="14"
-      color="#43586a">
-    </a-box>
-
-    <!-- Upper ceiling -->
-    <a-box
-      position="0 8 0"
-      width="24"
-      height="0.25"
-      depth="14"
-      color="#4e5b65">
-    </a-box>
-
-
-    <!-- =========================================================
-         BLUE WALL SUPPORT COLUMNS
-         ========================================================= -->
-
-    <a-box position="-11.7 4 -6.8" width="0.35" height="8" depth="0.35" color="#244b70"></a-box>
-    <a-box position="-6 4 -6.8" width="0.35" height="8" depth="0.35" color="#244b70"></a-box>
-    <a-box position="0 4 -6.8" width="0.35" height="8" depth="0.35" color="#244b70"></a-box>
-    <a-box position="6 4 -6.8" width="0.35" height="8" depth="0.35" color="#244b70"></a-box>
-    <a-box position="11.7 4 -6.8" width="0.35" height="8" depth="0.35" color="#244b70"></a-box>
-
-
-    <!-- =========================================================
-         CEILING LIGHTS
-         ========================================================= -->
-
-    <a-box position="-9 7.8 -2" width="2.5" height="0.12" depth="1" color="#e9edf0"></a-box>
-    <a-box position="-3 7.8 -2" width="2.5" height="0.12" depth="1" color="#e9edf0"></a-box>
-    <a-box position="3 7.8 -2" width="2.5" height="0.12" depth="1" color="#e9edf0"></a-box>
-    <a-box position="9 7.8 -2" width="2.5" height="0.12" depth="1" color="#e9edf0"></a-box>
-
-    <a-box position="-9 7.78 4" width="2.5" height="0.12" depth="1" color="#e9edf0"></a-box>
-    <a-box position="-3 7.78 4" width="2.5" height="0.12" depth="1" color="#e9edf0"></a-box>
-    <a-box position="3 7.78 4" width="2.5" height="0.12" depth="1" color="#e9edf0"></a-box>
-    <a-box position="9 7.78 4" width="2.5" height="0.12" depth="1" color="#e9edf0"></a-box>
-
-
-    <!-- =========================================================
-         WALKING PATH
-         ========================================================= -->
-
-    <!-- Yellow border around pedestrian path -->
-    <a-box position="0 0.045 5.4" width="23" height="0.04" depth="0.08" color="#ffd21c"></a-box>
-    <a-box position="0 0.045 6.6" width="23" height="0.04" depth="0.08" color="#ffd21c"></a-box>
-    <a-box position="-11.45 0.045 6" width="0.08" height="0.04" depth="1.2" color="#ffd21c"></a-box>
-    <a-box position="11.45 0.045 6" width="0.08" height="0.04" depth="1.2" color="#ffd21c"></a-box>
-
-    <!-- Simple pedestrian center markings -->
-    <a-box position="-7 0.055 6" width="1.2" height="0.03" depth="0.08" color="#f4f4f4"></a-box>
-    <a-box position="-4 0.055 6" width="1.2" height="0.03" depth="0.08" color="#f4f4f4"></a-box>
-    <a-box position="-1 0.055 6" width="1.2" height="0.03" depth="0.08" color="#f4f4f4"></a-box>
-    <a-box position="2 0.055 6" width="1.2" height="0.03" depth="0.08" color="#f4f4f4"></a-box>
-    <a-box position="5 0.055 6" width="1.2" height="0.03" depth="0.08" color="#f4f4f4"></a-box>
-    <a-box position="8 0.055 6" width="1.2" height="0.03" depth="0.08" color="#f4f4f4"></a-box>
-
-
-    <!-- =========================================================
-         SAFETY ZONES
-         ========================================================= -->
-
-    <!-- M01 yellow safety boundary -->
-    <a-box position="-7 0.06 -0.8" width="5.3" height="0.04" depth="0.08" color="#ffd21c"></a-box>
-    <a-box position="-7 0.06 2.0" width="5.3" height="0.04" depth="0.08" color="#ffd21c"></a-box>
-    <a-box position="-9.6 0.06 0.6" width="0.08" height="0.04" depth="2.8" color="#ffd21c"></a-box>
-    <a-box position="-4.4 0.06 0.6" width="0.08" height="0.04" depth="2.8" color="#ffd21c"></a-box>
-
-    <!-- M02 yellow safety boundary -->
-    <a-box position="0 0.06 -1.6" width="6.4" height="0.04" depth="0.08" color="#ffd21c"></a-box>
-    <a-box position="0 0.06 2.1" width="6.4" height="0.04" depth="0.08" color="#ffd21c"></a-box>
-    <a-box position="-3.1 0.06 0.25" width="0.08" height="0.04" depth="3.7" color="#ffd21c"></a-box>
-    <a-box position="3.1 0.06 0.25" width="0.08" height="0.04" depth="3.7" color="#ffd21c"></a-box>
-
-    <!-- M03 yellow safety boundary -->
-    <a-box position="7 0.06 -1.1" width="5.3" height="0.04" depth="0.08" color="#ffd21c"></a-box>
-    <a-box position="7 0.06 2.0" width="5.3" height="0.04" depth="0.08" color="#ffd21c"></a-box>
-    <a-box position="4.4 0.06 0.45" width="0.08" height="0.04" depth="3.1" color="#ffd21c"></a-box>
-    <a-box position="9.6 0.06 0.45" width="0.08" height="0.04" depth="3.1" color="#ffd21c"></a-box>
-
-
-    <!-- =========================================================
-         M01 - PRECISION DISK WEIGHING
-         ========================================================= -->
-
-    <a-entity id="M01">
-
-      <!-- Main compact machine body -->
-      <a-box
-        position="-7 1.65 0"
-        width="4.4"
-        height="3.3"
-        depth="2.7"
-        color="#e8e8e8">
-      </a-box>
-
-      <!-- Blue lower machine section -->
-      <a-box
-        position="-7 0.35 0"
-        width="4.45"
-        height="0.7"
-        depth="2.75"
-        color="#15589a">
-      </a-box>
-
-      <!-- Upper blue trim -->
-      <a-box
-        position="-7 3.0 0"
-        width="4.45"
-        height="0.18"
-        depth="2.75"
-        color="#2b6ca8">
-      </a-box>
-
-      <!-- Front opening -->
-      <a-box
-        position="-7 1.75 1.37"
-        width="2.8"
-        height="1.65"
-        depth="0.08"
-        color="#ffffff">
-      </a-box>
-
-      <!-- Weighing platform -->
-      <a-cylinder
-        position="-7 1.05 1.05"
-        radius="0.62"
-        height="0.12"
-        color="#d0d4d7"
-        segments="16">
-      </a-cylinder>
-
-      <!-- Load-cell pedestal -->
-      <a-cylinder
-        position="-7 0.94 1.05"
-        radius="0.28"
-        height="0.14"
-        color="#8c9297"
-        segments="12">
-      </a-cylinder>
-
-      <!-- Scale disk / HDD -->
-      <a-cylinder
-        position="-7 1.16 1.05"
-        radius="0.43"
-        height="0.08"
-        color="#262b30"
-        segments="16">
-      </a-cylinder>
-
-      <!-- M01 control panel -->
-      <a-box
-        position="-5.2 1.65 1.38"
-        width="0.6"
-        height="1.1"
-        depth="0.12"
-        color="#27333d">
-      </a-box>
-
-      <a-box
-        position="-5.2 1.92 1.46"
-        width="0.38"
-        height="0.28"
-        depth="0.03"
-        color="#163a60">
-      </a-box>
-
-      <a-cylinder position="-5.2 1.52 1.46" radius="0.08" height="0.03" color="#39a852" rotation="90 0 0"></a-cylinder>
-      <a-cylinder position="-5.2 1.30 1.46" radius="0.08" height="0.03" color="#e53935" rotation="90 0 0"></a-cylinder>
-
-      <!-- Status tower -->
-      <a-cylinder position="-8.65 3.65 0" radius="0.07" height="0.7" color="#333333"></a-cylinder>
-      <a-cylinder position="-8.65 4.0 0" radius="0.09" height="0.16" color="#e53935"></a-cylinder>
-      <a-cylinder position="-8.65 3.82 0" radius="0.09" height="0.16" color="#f4c430"></a-cylinder>
-      <a-cylinder position="-8.65 3.64 0" radius="0.09" height="0.16" color="#35a853"></a-cylinder>
-
-      <!-- Machine label -->
-      <a-text
-        value="M01  PRECISION WEIGHING"
-        position="-7 3.75 1.46"
-        rotation="0 0 0"
-        align="center"
-        width="4.5"
-        color="#ffffff"
-        side="double">
-      </a-text>
-
-      <!-- Clickable invisible machine hit area -->
-      <a-box
-        position="-7 1.8 1.45"
-        width="4.5"
-        height="3.5"
-        depth="0.08"
-        material="transparent: true; opacity: 0.01"
-        class="clickable"
-        machine-click="
-          name: M01 — Precision Disk Weighing;
-          functionText: A compact blue-and-white weighing station. The robot picks an HDD disk, places it on the circular load-cell platform, waits for the measurement, and returns the disk to the outfeed.;
-          color: #1765a8;
-        ">
-      </a-box>
-
-
-      <!-- ---------------- ROBOT M01 ---------------- -->
-
-      <a-entity id="robotM01" position="-7 0.9 0.45">
-
-        <!-- Base -->
-        <a-cylinder
-          position="0 0 0"
-          radius="0.38"
-          height="0.22"
-          color="#164f88"
-          segments="12">
-        </a-cylinder>
-
-        <!-- Shoulder joint -->
-        <a-entity
-          position="0 0.35 0"
-          rotation="0 0 0"
-          animation="
-            property: rotation;
-            from: 0 0 -18;
-            to: 0 0 28;
-            dur: 2400;
-            dir: alternate;
-            loop: true;
-            easing: easeInOutSine">
-
-          <a-sphere
-            radius="0.22"
-            color="#246aa5"
-            segments="12"
-            position="0 0 0">
-          </a-sphere>
-
-          <!-- Upper arm -->
-          <a-box
-            position="0 0.55 0"
-            width="0.24"
-            height="1.05"
-            depth="0.24"
-            color="#2167a1">
-          </a-box>
-
-          <!-- Elbow -->
-          <a-entity
-            position="0 1.08 0"
-            rotation="0 0 0"
-            animation="
-              property: rotation;
-              from: 0 0 20;
-              to: 0 0 -35;
-              dur: 1900;
-              dir: alternate;
-              loop: true;
-              delay: 300;
-              easing: easeInOutSine">
-
-            <a-sphere radius="0.19" color="#246aa5" segments="12"></a-sphere>
-
-            <!-- Forearm -->
-            <a-box
-              position="0 0.45 0"
-              width="0.2"
-              height="0.85"
-              depth="0.2"
-              color="#2167a1">
-            </a-box>
-
-            <!-- Wrist -->
-            <a-entity
-              position="0 0.88 0"
-              rotation="0 0 0"
-              animation="
-                property: rotation;
-                from: 0 0 -15;
-                to: 0 0 25;
-                dur: 1200;
-                dir: alternate;
-                loop: true;
-                delay: 500;
-                easing: easeInOutSine">
-
-              <a-sphere radius="0.15" color="#173f6b" segments="10"></a-sphere>
-
-              <!-- Gripper -->
-              <a-entity position="0 0.25 0">
-
-                <a-box
-                  position="-0.09 0 0"
-                  width="0.08"
-                  height="0.28"
-                  depth="0.08"
-                  color="#333333">
-                </a-box>
-
-                <a-box
-                  position="0.09 0 0"
-                  width="0.08"
-                  height="0.28"
-                  depth="0.08"
-                  color="#333333">
-                </a-box>
-
-                <a-cylinder
-                  position="0 -0.16 0"
-                  radius="0.13"
-                  height="0.08"
-                  color="#50565b"
-                  rotation="90 0 0"
-                  segments="8">
-                </a-cylinder>
-
-              </a-entity>
-            </a-entity>
-          </a-entity>
-        </a-entity>
-      </a-entity>
-
-    </a-entity>
-
-
-    <!-- =========================================================
-         CONVEYOR 1 : M01 -> M02
-         ========================================================= -->
-
-    <a-entity id="conveyor01">
-
-      <a-box position="-3.9 0.45 0.7" width="2.2" height="0.25" depth="1.0" color="#555b60"></a-box>
-      <a-box position="-2.2 0.45 0.7" width="1.2" height="0.25" depth="1.0" color="#555b60"></a-box>
-
-      <!-- Conveyor rollers -->
-      <a-cylinder position="-4.7 0.58 0.7" radius="0.22" height="1.0" rotation="90 0 0" color="#70767b" segments="10"></a-cylinder>
-      <a-cylinder position="-4.15 0.58 0.7" radius="0.22" height="1.0" rotation="90 0 0" color="#70767b" segments="10"></a-cylinder>
-      <a-cylinder position="-3.6 0.58 0.7" radius="0.22" height="1.0" rotation="90 0 0" color="#70767b" segments="10"></a-cylinder>
-      <a-cylinder position="-3.05 0.58 0.7" radius="0.22" height="1.0" rotation="90 0 0" color="#70767b" segments="10"></a-cylinder>
-      <a-cylinder position="-2.5 0.58 0.7" radius="0.22" height="1.0" rotation="90 0 0" color="#70767b" segments="10"></a-cylinder>
-
-    </a-entity>
-
-
-    <!-- =========================================================
-         M02 - ROBOTIC ASSEMBLY
-         ========================================================= -->
-
-    <a-entity id="M02">
-
-      <!-- Orange cell frame -->
-      <a-box position="-2.9 2.2 -1.0" width="0.18" height="4.4" depth="0.18" color="#f28a00"></a-box>
-      <a-box position="2.9 2.2 -1.0" width="0.18" height="4.4" depth="0.18" color="#f28a00"></a-box>
-      <a-box position="-2.9 2.2 2.0" width="0.18" height="4.4" depth="0.18" color="#f28a00"></a-box>
-      <a-box position="2.9 2.2 2.0" width="0.18" height="4.4" depth="0.18" color="#f28a00"></a-box>
-
-      <a-box position="0 4.35 -1.0" width="6.0" height="0.18" depth="0.18" color="#f28a00"></a-box>
-      <a-box position="0 4.35 2.0" width="6.0" height="0.18" depth="0.18" color="#f28a00"></a-box>
-
-      <!-- Transparent safety panels -->
-      <a-box
-        position="-1.45 2.2 2.0"
-        width="2.7"
-        height="4.1"
-        depth="0.04"
-        material="color: #9db4c5; opacity: 0.22; transparent: true">
-      </a-box>
-
-      <a-box
-        position="1.45 2.2 2.0"
-        width="2.7"
-        height="4.1"
-        depth="0.04"
-        material="color: #9db4c5; opacity: 0.22; transparent: true">
-      </a-box>
-
-      <a-box
-        position="-2.9 2.2 0.5"
-        width="0.04"
-        height="4.1"
-        depth="3.0"
-        material="color: #9db4c5; opacity: 0.22; transparent: true">
-      </a-box>
-
-      <a-box
-        position="2.9 2.2 0.5"
-        width="0.04"
-        height="4.1"
-        depth="3.0"
-        material="color: #9db4c5; opacity: 0.22; transparent: true">
-      </a-box>
-
-      <!-- Assembly table -->
-      <a-box position="0 0.95 0.5" width="3.2" height="0.22" depth="1.5" color="#4f5559"></a-box>
-
-      <!-- HDD fixture -->
-      <a-box position="0 1.1 0.5" width="1.9" height="0.15" depth="1.05" color="#777d82"></a-box>
-
-      <!-- Fixture disk -->
-      <a-cylinder
-        position="0 1.2 0.5"
-        radius="0.42"
-        height="0.08"
-        color="#24282c"
-        segments="16">
-      </a-cylinder>
-
-      <!-- Component waiting tray -->
-      <a-box position="-1.85 1.05 0.5" width="0.75" height="0.2" depth="0.9" color="#646b70"></a-box>
-
-      <a-cylinder
-        position="-1.85 1.18 0.5"
-        radius="0.28"
-        height="0.08"
-        color="#c5c8ca"
-        segments="12">
-      </a-cylinder>
-
-      <!-- Orange machine label -->
-      <a-text
-        value="M02  ROBOTIC ASSEMBLY"
-        position="0 4.65 0.5"
-        align="center"
-        width="5"
-        color="#ffffff">
-      </a-text>
-
-      <!-- Status light -->
-      <a-cylinder position="2.35 4.65 0.5" radius="0.08" height="0.65" color="#333333"></a-cylinder>
-      <a-cylinder position="2.35 4.98 0.5" radius="0.09" height="0.16" color="#e53935"></a-cylinder>
-      <a-cylinder position="2.35 4.80 0.5" radius="0.09" height="0.16" color="#f4c430"></a-cylinder>
-      <a-cylinder position="2.35 4.62 0.5" radius="0.09" height="0.16" color="#35a853"></a-cylinder>
-
-      <!-- M02 control panel -->
-      <a-box position="2.35 1.85 2.12" width="0.65" height="1.15" depth="0.12" color="#27333d"></a-box>
-      <a-box position="2.35 2.12 2.19" width="0.42" height="0.3" depth="0.03" color="#173b60"></a-box>
-      <a-cylinder position="2.35 1.70 2.19" radius="0.08" height="0.03" rotation="90 0 0" color="#e85b2a"></a-cylinder>
-      <a-cylinder position="2.35 1.48 2.19" radius="0.08" height="0.03" rotation="90 0 0" color="#35a853"></a-cylinder>
-
-      <!-- Clickable machine area -->
-      <a-box
-        position="0 2.2 2.05"
-        width="5.8"
-        height="4.2"
-        depth="0.08"
-        material="transparent: true; opacity: 0.01"
-        class="clickable"
-        machine-click="
-          name: M02 — HDD Robotic Assembly;
-          functionText: An orange guarded robotic cell. The large three-joint robot picks a component from the feeder, moves above the HDD fixture, aligns it, places the component, and retracts.;
-          color: #f28a00;
-        ">
-      </a-box>
-
-
-      <!-- ---------------- ROBOT M02 ---------------- -->
-
-      <a-entity id="robotM02" position="0 1.15 0.1">
-
-        <!-- Base -->
-        <a-cylinder
-          radius="0.48"
-          height="0.25"
-          color="#d66f00"
-          segments="12">
-        </a-cylinder>
-
-        <!-- Shoulder -->
-        <a-entity
-          position="0 0.38 0"
-          animation="
-            property: rotation;
-            from: 0 0 -30;
-            to: 0 0 30;
-            dur: 2800;
-            dir: alternate;
-            loop: true;
-            easing: easeInOutSine">
-
-          <a-sphere radius="0.28" color="#ef8500" segments="12"></a-sphere>
-
-          <a-box
-            position="0 0.72 0"
-            width="0.35"
-            height="1.35"
-            depth="0.35"
-            color="#ed8200">
-          </a-box>
-
-          <!-- Elbow -->
-          <a-entity
-            position="0 1.38 0"
-            animation="
-              property: rotation;
-              from: 0 0 40;
-              to: 0 0 -45;
-              dur: 2200;
-              dir: alternate;
-              loop: true;
-              delay: 250;
-              easing: easeInOutSine">
-
-            <a-sphere radius="0.25" color="#d66f00" segments="12"></a-sphere>
-
-            <a-box
-              position="0 0.62 0"
-              width="0.3"
-              height="1.15"
-              depth="0.3"
-              color="#ef8500">
-            </a-box>
-
-            <!-- Wrist -->
-            <a-entity
-              position="0 1.2 0"
-              animation="
-                property: rotation;
-                from: 0 0 -25;
-                to: 0 0 30;
-                dur: 1500;
-                dir: alternate;
-                loop: true;
-                delay: 500;
-                easing: easeInOutSine">
-
-              <a-sphere radius="0.20" color="#bd5d00" segments="10"></a-sphere>
-
-              <!-- Gripper -->
-              <a-entity position="0 0.3 0">
-
-                <a-box
-                  position="-0.12 0 0"
-                  width="0.1"
-                  height="0.35"
-                  depth="0.1"
-                  color="#303337">
-                </a-box>
-
-                <a-box
-                  position="0.12 0 0"
-                  width="0.1"
-                  height="0.35"
-                  depth="0.1"
-                  color="#303337">
-                </a-box>
-
-                <a-cylinder
-                  position="0 -0.2 0"
-                  radius="0.16"
-                  height="0.1"
-                  rotation="90 0 0"
-                  color="#4c5155"
-                  segments="8">
-                </a-cylinder>
-
-              </a-entity>
-            </a-entity>
-          </a-entity>
-        </a-entity>
-      </a-entity>
-
-    </a-entity>
-
-
-    <!-- =========================================================
-         CONVEYOR 2 : M02 -> M03
-         ========================================================= -->
-
-    <a-entity id="conveyor02">
-
-      <a-box position="3.9 0.45 0.7" width="2.2" height="0.25" depth="1.0" color="#555b60"></a-box>
-      <a-box position="5.5 0.45 0.7" width="1.2" height="0.25" depth="1.0" color="#555b60"></a-box>
-
-      <a-cylinder position="3.15 0.58 0.7" radius="0.22" height="1.0" rotation="90 0 0" color="#70767b" segments="10"></a-cylinder>
-      <a-cylinder position="3.7 0.58 0.7" radius="0.22" height="1.0" rotation="90 0 0" color="#70767b" segments="10"></a-cylinder>
-      <a-cylinder position="4.25 0.58 0.7" radius="0.22" height="1.0" rotation="90 0 0" color="#70767b" segments="10"></a-cylinder>
-      <a-cylinder position="4.8 0.58 0.7" radius="0.22" height="1.0" rotation="90 0 0" color="#70767b" segments="10"></a-cylinder>
-      <a-cylinder position="5.35 0.58 0.7" radius="0.22" height="1.0" rotation="90 0 0" color="#70767b" segments="10"></a-cylinder>
-
-    </a-entity>
-
-
-    <!-- =========================================================
-         M03 - SPIN AND FUNCTIONAL TEST
-         ========================================================= -->
-
-    <a-entity id="M03">
-
-      <!-- Dark-blue test cabinet -->
-      <a-box
-        position="7 1.9 0"
-        width="4.5"
-        height="3.8"
-        depth="2.9"
-        color="#1e3045">
-      </a-box>
-
-      <!-- Upper cabinet -->
-      <a-box
-        position="7 3.55 0"
-        width="4.55"
-        height="0.55"
-        depth="2.95"
-        color="#273a50">
-      </a-box>
-
-      <!-- Test chamber -->
-      <a-box
-        position="6.55 1.85 1.5"
-        width="2.4"
-        height="2.25"
-        depth="0.08"
-        material="color: #9eabb5; opacity: 0.35; transparent: true">
-      </a-box>
-
-      <!-- Chamber frame -->
-      <a-box position="5.3 1.85 1.43" width="0.12" height="2.35" depth="0.15" color="#89949d"></a-box>
-      <a-box position="7.8 1.85 1.43" width="0.12" height="2.35" depth="0.15" color="#89949d"></a-box>
-      <a-box position="6.55 3.02 1.43" width="2.6" height="0.12" depth="0.15" color="#89949d"></a-box>
-      <a-box position="6.55 0.68 1.43" width="2.6" height="0.12" depth="0.15" color="#89949d"></a-box>
-
-      <!-- Spindle -->
-      <a-cylinder
-        position="6.55 1.55 1.05"
-        radius="0.34"
-        height="0.45"
-        color="#c2c7ca"
-        segments="12">
-      </a-cylinder>
-
-      <a-cylinder
-        position="6.55 1.8 1.05"
-        radius="0.15"
-        height="0.12"
-        color="#6f767b"
-        segments="12">
-      </a-cylinder>
-
-      <!-- HDD on spindle -->
-      <a-cylinder
-        position="6.55 2.02 1.05"
-        radius="0.46"
-        height="0.08"
-        color="#24282c"
-        segments="16">
-      </a-cylinder>
-
-      <!-- Control cabinet -->
-      <a-box
-        position="8.75 1.9 1.42"
-        width="0.8"
-        height="2.3"
-        depth="0.15"
-        color="#26313c">
-      </a-box>
-
-      <!-- Green display -->
-      <a-box
-        position="8.75 2.45 1.53"
-        width="0.52"
-        height="0.42"
-        depth="0.03"
-        color="#172a22">
-      </a-box>
-
-      <a-text
-        value="TEST OK"
-        position="8.75 2.46 1.57"
-        align="center"
-        width="1.2"
-        color="#74e35a">
-      </a-text>
-
-      <!-- Control buttons -->
-      <a-cylinder position="8.55 1.85 1.55" radius="0.08" height="0.03" rotation="90 0 0" color="#e53935"></a-cylinder>
-      <a-cylinder position="8.75 1.85 1.55" radius="0.08" height="0.03" rotation="90 0 0" color="#f4c430"></a-cylinder>
-      <a-cylinder position="8.95 1.85 1.55" radius="0.08" height="0.03" rotation="90 0 0" color="#35a853"></a-cylinder>
-
-      <!-- Status tower -->
-      <a-cylinder position="8.8 4.55 0" radius="0.07" height="0.7" color="#333333"></a-cylinder>
-      <a-cylinder position="8.8 4.90 0" radius="0.09" height="0.16" color="#e53935"></a-cylinder>
-      <a-cylinder position="8.8 4.72 0" radius="0.09" height="0.16" color="#f4c430"></a-cylinder>
-      <a-cylinder position="8.8 4.54 0" radius="0.09" height="0.16" color="#35a853"></a-cylinder>
-
-      <!-- Label -->
-      <a-text
-        value="M03  SPIN & FUNCTIONAL TEST"
-        position="7 4.65 1.46"
-        align="center"
-        width="4.8"
-        color="#ffffff">
-      </a-text>
-
-      <!-- Clickable machine area -->
-      <a-box
-        position="7 2.0 1.48"
-        width="4.5"
-        height="3.9"
-        depth="0.08"
-        material="transparent: true; opacity: 0.01"
-        class="clickable"
-        machine-click="
-          name: M03 — Spin and Functional Test;
-          functionText: An enclosed dark-blue test cabinet. The compact robot loads the HDD into the spindle test chamber, waits for the functional test, then unloads the HDD to the outfeed.;
-          color: #173f68;
-        ">
-      </a-box>
-
-
-      <!-- ---------------- ROBOT M03 ---------------- -->
-
-      <a-entity id="robotM03" position="6.55 0.95 0.95">
-
-        <!-- Base -->
-        <a-cylinder
-          radius="0.34"
-          height="0.22"
-          color="#174f80"
-          segments="12">
-        </a-cylinder>
-
-        <!-- Shoulder -->
-        <a-entity
-          position="0 0.35 0"
-          animation="
-            property: rotation;
-            from: 0 0 -22;
-            to: 0 0 24;
-            dur: 2600;
-            dir: alternate;
-            loop: true;
-            easing: easeInOutSine">
-
-          <a-sphere radius="0.21" color="#286b9d" segments="12"></a-sphere>
-
-          <a-box
-            position="0 0.5 0"
-            width="0.23"
-            height="0.95"
-            depth="0.23"
-            color="#286b9d">
-          </a-box>
-
-          <!-- Elbow -->
-          <a-entity
-            position="0 1.0 0"
-            animation="
-              property: rotation;
-              from: 0 0 25;
-              to: 0 0 -30;
-              dur: 2100;
-              dir: alternate;
-              loop: true;
-              delay: 250;
-              easing: easeInOutSine">
-
-            <a-sphere radius="0.18" color="#205b8d" segments="12"></a-sphere>
-
-            <a-box
-              position="0 0.43 0"
-              width="0.2"
-              height="0.82"
-              depth="0.2"
-              color="#286b9d">
-            </a-box>
-
-            <!-- Wrist -->
-            <a-entity
-              position="0 0.85 0"
-              animation="
-                property: rotation;
-                from: 0 0 -18;
-                to: 0 0 22;
-                dur: 1400;
-                dir: alternate;
-                loop: true;
-                delay: 450;
-                easing: easeInOutSine">
-
-              <a-sphere radius="0.14" color="#19496f" segments="10"></a-sphere>
-
-              <!-- Gripper -->
-              <a-entity position="0 0.24 0">
-
-                <a-box
-                  position="-0.085 0 0"
-                  width="0.07"
-                  height="0.27"
-                  depth="0.07"
-                  color="#333333">
-                </a-box>
-
-                <a-box
-                  position="0.085 0 0"
-                  width="0.07"
-                  height="0.27"
-                  depth="0.07"
-                  color="#333333">
-                </a-box>
-
-                <a-cylinder
-                  position="0 -0.15 0"
-                  radius="0.12"
-                  height="0.08"
-                  rotation="90 0 0"
-                  color="#555a5e"
-                  segments="8">
-                </a-cylinder>
-
-              </a-entity>
-            </a-entity>
-          </a-entity>
-        </a-entity>
-      </a-entity>
-
-    </a-entity>
-
-
-    <!-- =========================================================
-         MOVING HDD CARRIERS
-         ========================================================= -->
-
-    <!-- Carrier 1 -->
-    <a-entity
-      carrier-motion
-      position="-11 0.62 0.7"
-      animation="
-        property: position;
-        from: -11 0.62 0.7;
-        to: 11 0.62 0.7;
-        dur: 14000;
-        loop: true;
-        easing: linear">
-
-      <a-box
-        width="0.85"
-        height="0.12"
-        depth="0.72"
-        color="#33383c">
-      </a-box>
-
-      <a-cylinder
-        position="0 0.10 0"
-        radius="0.25"
-        height="0.08"
-        color="#aeb3b6"
-        segments="16">
-      </a-cylinder>
-    </a-entity>
-
-
-    <!-- Carrier 2, delayed -->
-    <a-entity
-      position="-15 0.62 0.7"
-      animation="
-        property: position;
-        from: -15 0.62 0.7;
-        to: 11 0.62 0.7;
-        dur: 16000;
-        delay: 5000;
-        loop: true;
-        easing: linear">
-
-      <a-box
-        width="0.85"
-        height="0.12"
-        depth="0.72"
-        color="#33383c">
-      </a-box>
-
-      <a-cylinder
-        position="0 0.10 0"
-        radius="0.25"
-        height="0.08"
-        color="#aeb3b6"
-        segments="16">
-      </a-cylinder>
-    </a-entity>
-
-
-    <!-- Carrier 3, further delayed -->
-    <a-entity
-      position="-18 0.62 0.7"
-      animation="
-        property: position;
-        from: -18 0.62 0.7;
-        to: 11 0.62 0.7;
-        dur: 18000;
-        delay: 10000;
-        loop: true;
-        easing: linear">
-
-      <a-box
-        width="0.85"
-        height="0.12"
-        depth="0.72"
-        color="#33383c">
-      </a-box>
-
-      <a-cylinder
-        position="0 0.10 0"
-        radius="0.25"
-        height="0.08"
-        color="#aeb3b6"
-        segments="16">
-      </a-cylinder>
-    </a-entity>
-
-
-    <!-- =========================================================
-         SMALL OUTFEED / INFEED TABLES
-         ========================================================= -->
-
-    <a-box position="-10.5 0.42 0.7" width="1.3" height="0.2" depth="1.0" color="#555b60"></a-box>
-    <a-box position="10.5 0.42 0.7" width="1.3" height="0.2" depth="1.0" color="#555b60"></a-box>
-
-
-    <!-- =========================================================
-         SAFETY BOLLARDS
-         ========================================================= -->
-
-    <a-cylinder position="-10.7 0.65 3.0" radius="0.10" height="1.0" color="#e6b900" segments="10"></a-cylinder>
-    <a-cylinder position="-3.5 0.65 3.0" radius="0.10" height="1.0" color="#e6b900" segments="10"></a-cylinder>
-    <a-cylinder position="3.5 0.65 3.0" radius="0.10" height="1.0" color="#e6b900" segments="10"></a-cylinder>
-    <a-cylinder position="10.7 0.65 3.0" radius="0.10" height="1.0" color="#e6b900" segments="10"></a-cylinder>
-
-
-    <!-- =========================================================
-         SIMPLE DIRECTION / WALKING SYMBOL
-         ========================================================= -->
-
-    <a-cylinder
-      position="0 0.08 6"
-      radius="0.28"
-      height="0.03"
-      color="#f4f4f4"
-      segments="12">
-    </a-cylinder>
-
-    <a-box position="-0.5 0.08 6" width="0.7" height="0.035" depth="0.12" color="#f4f4f4"></a-box>
-    <a-box position="0.5 0.08 6" width="0.7" height="0.035" depth="0.12" color="#f4f4f4"></a-box>
-
-
-    <!-- =========================================================
-         CAMERA AND CONTROLS
-         ========================================================= -->
-
-    <!--
-      A-Frame's built-in look-controls provides mouse look.
-      Built-in wasd-controls provides desktop keyboard movement.
-    -->
-    <a-entity
-      id="cameraRig"
-      position="0 2.8 11">
-
-      <a-camera
-        position="0 0 0"
-        look-controls="pointerLockEnabled: false"
-        wasd-controls="acceleration: 18"
-        near="0.1"
-        far="60">
-
-        <!-- Mouse cursor for clickable machines -->
-        <a-cursor
-          raycaster="objects: .clickable"
-          fuse="false"
-          color="#ffffff"
-          scale="0.012 0.012 0.012">
-        </a-cursor>
-
-      </a-camera>
-    </a-entity>
-
-
-    <!-- =========================================================
-         SIMPLE AMBIENT FACTORY DETAILS
-         ========================================================= -->
-
-    <!-- Back-wall horizontal structural strips -->
-    <a-box position="0 6.7 -6.82" width="24" height="0.15" depth="0.12" color="#304b62"></a-box>
-    <a-box position="0 1.0 -6.82" width="24" height="0.15" depth="0.12" color="#304b62"></a-box>
-
-    <!-- Small floor safety posts -->
-    <a-cylinder position="-11.2 0.5 4.7" radius="0.07" height="0.9" color="#e6b900" segments="8"></a-cylinder>
-    <a-cylinder position="11.2 0.5 4.7" radius="0.07" height="0.9" color="#e6b900" segments="8"></a-cylinder>
-
-
-    <!-- =========================================================
-         WEBXR SUPPORT
-         ========================================================= -->
-
-    <!-- A-Frame automatically supplies the WebXR entry button. -->
-
-  </a-scene>
+  <div id="speedText">ความเร็ว: 1x</div>
+  <button id="speedButton">✈️ เพิ่มความเร็ว</button>
+
+  <a-scene
+    embedded
+    vr-mode-ui="enabled: false"
+    renderer="logarithmicDepthBuffer: true; colorManagement: true"
+    arjs="sourceType: webcam; debugUIEnabled: false;">
+
+    <!-- Hiro Marker -->
+    <a-marker
+      id="hiroMarker"
+      preset="hiro"
+      emitevents="true">
+
+      <!-- เครื่องบินลำที่ 1 -->
+      <a-entity
+        id="plane1"
+        position="0 0.8 0"
+        scale="0.45 0.45 0.45">
+
+        <!-- ลำตัว -->
+        <a-box
+          position="0 0 0"
+          depth="1.6"
+          height="0.18"
+          width="0.22"
+          color="#eeeeee">
+        </a-box>
+
+        <!-- ปีก -->
+        <a-box
+          position="0 0 0"
+          depth="0.25"
+          height="0.08"
+          width="1.8"
+          color="#2196f3">
+        </a-box>
+
+        <!-- หาง -->
+        <a-box
+          position="0 0.08 0.65"
+          depth="0.35"
+          height="0.35"
+          width="0.08"
+          color="#1976d2">
+        </a-box>
+
+        <!-- ปีกหาง -->
+        <a-box
+          position="0 0 0.65"
+          depth="0.2"
+          height="0.05"
+          width="0.65"
+          color="#1976d2">
+        </a-box>
+
+        <!-- จมูก -->
+        <a-cone
+          position="0 0 -0.9"
+          rotation="90 0 0"
+          radius-bottom="0.15"
+          radius-top="0"
+          height="0.35"
+          color="#ffffff">
+        </a-cone>
+      </a-entity>
+
+
+      <!-- เครื่องบินลำที่ 2 -->
+      <a-entity
+        id="plane2"
+        position="0 1.1 0"
+        scale="0.38 0.38 0.38"
+        rotation="0 120 0">
+
+        <a-box
+          depth="1.6"
+          height="0.18"
+          width="0.22"
+          color="#eeeeee">
+        </a-box>
+
+        <a-box
+          position="0 0 0"
+          depth="0.25"
+          height="0.08"
+          width="1.8"
+          color="#f44336">
+        </a-box>
+
+        <a-box
+          position="0 0.08 0.65"
+          depth="0.35"
+          height="0.35"
+          width="0.08"
+          color="#c62828">
+        </a-box>
+
+        <a-box
+          position="0 0 0.65"
+          depth="0.2"
+          height="0.05"
+          width="0.65"
+          color="#c62828">
+        </a-box>
+
+        <a-cone
+          position="0 0 -0.9"
+          rotation="90 0 0"
+          radius-bottom="0.15"
+          radius-top="0"
+          height="0.35"
+          color="#ffffff">
+        </a-cone>
+      </a-entity>
+
+
+      <!-- เครื่องบินลำที่ 3 -->
+      <a-entity
+        id="plane3"
+        position="0 1.4 0"
+        scale="0.32 0.32 0.32"
+        rotation="0 240 0">
+
+        <a-box
+          depth="1.6"
+          height="0.18"
+          width="0.22"
+          color="#eeeeee">
+        </a-box>
+
+        <a-box
+          position="0 0 0"
+          depth="0.25"
+          height="0.08"
+          width="1.8"
+          color="#4caf50">
+        </a-box>
+
+        <a-box
+          position="0 0.08 0.65"
+          depth="0.35"
+          height="0.35"
+          width="0.08"
+          color="#2e7d32">
+        </a-box>
+
+        <a-box
+          position="0 0 0.65"
+          depth="0.2"
+          height="0.05"
+          width="0.65"
+          color="#2e7d32">
+        </a-box>
+
+        <a-cone
+          position="0 0 -0.9"
+          rotation="90 0 0"
+          radius-bottom="0.15"
+          radius-top="0"
+          height="0.35"
+          color="#ffffff">
+        </a-cone>
+      </a-entity>
+
+    </a-marker>
+
+    <!-- กล้อง AR -->
+    <a-entity camera></a-entity>
+
+  </a-scene>
+
+
+<script>
+
+  // ==========================================
+  // ตั้งค่า
+  // ==========================================
+
+  let speed = 1;
+
+  let time = 0;
+
+  const planes = [
+    document.querySelector("#plane1"),
+    document.querySelector("#plane2"),
+    document.querySelector("#plane3")
+  ];
+
+  const speedText = document.querySelector("#speedText");
+  const speedButton = document.querySelector("#speedButton");
+
+
+  // ==========================================
+  // เพิ่มความเร็ว
+  // ==========================================
+
+  speedButton.addEventListener("click", function () {
+
+    speed += 0.5;
+
+    if (speed > 5) {
+      speed = 1;
+    }
+
+    speedText.innerText = "ความเร็ว: " + speed.toFixed(1) + "x";
+
+  });
+
+
+  // ==========================================
+  // คำนวณตำแหน่งเส้นทางเลข 8
+  // ==========================================
+
+  function figureEight(t, phase, radiusX, radiusZ) {
+
+    /*
+      Parametric figure 8
+
+      x = sin(t)
+      z = sin(t) * cos(t)
+
+      ทำให้เกิดรูปเลข 8
+    */
+
+    const x =
+      radiusX *
+      Math.sin(t + phase);
+
+    const z =
+      radiusZ *
+      Math.sin(t + phase) *
+      Math.cos(t + phase);
+
+    return {
+      x: x,
+      z: z
+    };
+  }
+
+
+  // ==========================================
+  // Animation
+  // ==========================================
+
+  function animate() {
+
+    requestAnimationFrame(animate);
+
+    time += 0.015 * speed;
+
+
+    planes.forEach((plane, index) => {
+
+      // ให้แต่ละลำบินเหลื่อมกัน
+      const phase =
+        index * (Math.PI * 2 / 3);
+
+      const pos =
+        figureEight(
+          time,
+          phase,
+          2.2,
+          2.0
+        );
+
+
+      // ความสูงแต่ละลำไม่เท่ากัน
+      const height =
+        0.9 +
+        index * 0.35 +
+        Math.sin(time * 2 + phase) * 0.15;
+
+
+      // ตั้งตำแหน่ง
+      plane.object3D.position.x = pos.x;
+      plane.object3D.position.y = height;
+      plane.object3D.position.z = pos.z;
+
+
+      // =====================================
+      // คำนวณทิศทางการบิน
+      // =====================================
+
+      const nextT =
+        time + 0.01;
+
+      const next =
+        figureEight(
+          nextT,
+          phase,
+          2.2,
+          2.0
+        );
+
+
+      const dx =
+        next.x - pos.x;
+
+      const dz =
+        next.z - pos.z;
+
+
+      const angle =
+        Math.atan2(dx, dz);
+
+
+      // หมุนเครื่องบินตามทิศทาง
+      plane.object3D.rotation.y =
+        angle;
+
+
+      // เอียงเครื่องบินตอนเลี้ยว
+      const banking =
+        Math.sin(time + phase) * 0.25;
+
+      plane.object3D.rotation.z =
+        banking;
+
+    });
+
+  }
+
+
+  // เริ่ม Animation
+  animate();
+
+
+  // ==========================================
+  // เมื่อพบ Hiro Marker
+  // ==========================================
+
+  const marker =
+    document.querySelector("#hiroMarker");
+
+  marker.addEventListener(
+    "markerFound",
+    function () {
+
+      speedText.innerText =
+        "พบ Hiro Marker • ความเร็ว: " +
+        speed.toFixed(1) +
+        "x";
+
+    }
+  );
+
+
+  marker.addEventListener(
+    "markerLost",
+    function () {
+
+      speedText.innerText =
+        "ค้นหา Hiro Marker...";
+
+    }
+  );
+
+</script>
 
 </body>
 </html>
