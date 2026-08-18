@@ -43,39 +43,63 @@
 
 
     /* =========================================
-       ปุ่มเพิ่มความเร็ว
+       แถบปุ่มควบคุม
+       ใช้ flexbox + ขนาดปรับตามหน้าจอด้วย clamp()
+       แทนขนาด fixed px ที่ใหญ่เกินไปเดิม
     ========================================== */
 
-    #speedButton {
+    #controls {
 
-#speedButton {
       position: fixed;
       z-index: 9999;
-      bottom: 30px;
+
+      bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
 
-      padding: 40px 80px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+
+      width: 100%;
+      max-width: 480px;
+
+      padding: 0 12px;
+      box-sizing: border-box;
+    }
+
+
+    .ctrlButton {
+
+      flex: 0 1 auto;
+
       border: none;
-      border-radius: 50px;
+      border-radius: 40px;
+
+      /* padding/font ปรับตามความกว้างจอ ไม่ล้นจอเล็ก ไม่เล็กเกินจอใหญ่ */
+      padding: clamp(10px, 2.6vw, 16px) clamp(16px, 4.5vw, 26px);
+      font-size: clamp(13px, 3.6vw, 17px);
+      font-weight: bold;
 
       background: rgba(0, 0, 0, 0.75);
       color: white;
 
-      font-size: 32px;
-      font-weight: bold;
-
       box-shadow: 0 5px 20px rgba(0,0,0,0.4);
       cursor: pointer;
+
+      white-space: nowrap;
 
       -webkit-tap-highlight-color: transparent;
     }
 
-    #speedButton:active {
+    .ctrlButton:active {
+      transform: scale(0.95);
+    }
 
-      transform:
-        translateX(-50%)
-        scale(0.95);
+    /* สถานะ active ของปุ่ม toggle (หยุดบิน / ควงสว่าน) */
+    .ctrlButton.active {
+      background: rgba(33, 150, 243, 0.9);
     }
 
 
@@ -103,7 +127,7 @@
 
       color: white;
 
-      font-size: 15px;
+      font-size: clamp(12px, 3.5vw, 15px);
 
       white-space: nowrap;
     }
@@ -125,9 +149,21 @@
   </div>
 
 
-  <button id="speedButton">
-    ✈️ เพิ่มความเร็ว
-  </button>
+  <div id="controls">
+
+    <button id="speedButton" class="ctrlButton">
+      ✈️ เพิ่มความเร็ว
+    </button>
+
+    <button id="stopButton" class="ctrlButton">
+      ⏸️ หยุดบิน
+    </button>
+
+    <button id="barrelButton" class="ctrlButton">
+      🌀 หมุนควงสว่าน
+    </button>
+
+  </div>
 
 
 
@@ -664,12 +700,22 @@
   <script>
 
     // =========================================
-    // ตั้งค่าความเร็ว
+    // สถานะการบิน
     // =========================================
 
     let speed = 1;
 
     let time = 0;
+
+    // เวลาสำหรับการควงสว่าน แยกจาก time หลัก
+    // เพื่อให้หมุนได้ต่อเนื่องด้วยความเร็วของตัวเอง
+    let rollTime = 0;
+
+    // true = กำลังบิน, false = หยุดนิ่ง (แช่ตำแหน่งปัจจุบัน)
+    let isFlying = true;
+
+    // true = กำลังหมุนควงสว่าน (barrel roll) รอบแกนลำตัวเครื่องบิน
+    let isBarrelRolling = false;
 
 
 
@@ -707,6 +753,14 @@
       document.querySelector("#speedButton");
 
 
+    const stopButton =
+      document.querySelector("#stopButton");
+
+
+    const barrelButton =
+      document.querySelector("#barrelButton");
+
+
 
     // =========================================
     // ปุ่มเพิ่มความเร็ว
@@ -726,13 +780,81 @@
         }
 
 
-        speedText.innerText =
-          "ความเร็ว: " +
-          speed.toFixed(1) +
-          "x";
+        updateSpeedText();
 
       }
     );
+
+
+
+    // =========================================
+    // ปุ่มหยุดบิน / บินต่อ
+    // =========================================
+
+    stopButton.addEventListener(
+      "click",
+      function () {
+
+        isFlying = !isFlying;
+
+        stopButton.textContent =
+          isFlying
+            ? "⏸️ หยุดบิน"
+            : "▶️ บินต่อ";
+
+        stopButton.classList.toggle(
+          "active",
+          !isFlying
+        );
+
+        updateSpeedText();
+
+      }
+    );
+
+
+
+    // =========================================
+    // ปุ่มหมุนควงสว่าน
+    // =========================================
+
+    barrelButton.addEventListener(
+      "click",
+      function () {
+
+        isBarrelRolling = !isBarrelRolling;
+
+        barrelButton.classList.toggle(
+          "active",
+          isBarrelRolling
+        );
+
+        updateSpeedText();
+
+      }
+    );
+
+
+
+    // =========================================
+    // อัปเดตข้อความสถานะด้านบน
+    // =========================================
+
+    function updateSpeedText() {
+
+      let status = "ความเร็ว: " + speed.toFixed(1) + "x";
+
+      if (!isFlying) {
+        status += " • หยุดนิ่ง";
+      }
+
+      if (isBarrelRolling) {
+        status += " • 🌀 ควงสว่าน";
+      }
+
+      speedText.innerText = status;
+
+    }
 
 
 
@@ -782,9 +904,22 @@
       );
 
 
+      // หยุดอัปเดตตำแหน่ง/การหมุนถ้ากดหยุดบิน
+      // (ยังคง requestAnimationFrame ไว้เพื่อให้กดบินต่อได้ทันที)
+      if (!isFlying) {
+        return;
+      }
+
+
       time +=
         0.015 *
         speed;
+
+
+      // ควงสว่านหมุนเร็วกว่าการเอียงปกติ และเดินตามความเร็วที่เลือกด้วย
+      if (isBarrelRolling) {
+        rollTime += 0.12 * speed;
+      }
 
 
 
@@ -906,7 +1041,7 @@
 
 
           // ===================================
-          // หมุนเครื่องบิน
+          // หมุนเครื่องบิน (หันหัวตามทิศทาง)
           // ===================================
 
           plane.object3D.rotation.y =
@@ -915,19 +1050,32 @@
 
 
           // ===================================
-          // เอียงตอนเลี้ยว
+          // เอียง / ควงสว่านรอบแกนลำตัว
           // ===================================
+          // ปกติ: เอียงเล็กน้อยตอนเลี้ยว (banking)
+          // เมื่อกดควงสว่าน: หมุนรอบแกน Z ต่อเนื่องเต็มรอบ
+          //                  (แต่ละลำเหลื่อมเฟสกันตาม phase
+          //                   เพื่อไม่ให้หมุนพร้อมกันดูแข็งเกินไป)
 
-          const banking =
+          if (isBarrelRolling) {
 
-            Math.sin(
-              time +
-              phase
-            ) * 0.25;
+            plane.object3D.rotation.z =
+              rollTime + phase;
+
+          } else {
+
+            const banking =
+
+              Math.sin(
+                time +
+                phase
+              ) * 0.25;
 
 
-          plane.object3D.rotation.z =
-            banking;
+            plane.object3D.rotation.z =
+              banking;
+
+          }
 
         }
       );
@@ -959,13 +1107,7 @@
       "markerFound",
       function () {
 
-        speedText.innerText =
-
-          "พบ Hiro Marker • ความเร็ว: " +
-
-          speed.toFixed(1) +
-
-          "x";
+        updateSpeedText();
 
       }
     );
