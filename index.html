@@ -22,6 +22,13 @@
       font-family: Arial, sans-serif;
     }
 
+    /* บังคับให้ video/canvas ของ AR.js เต็มจอเสมอ ไม่ให้ค้างสเกลผิด */
+    #arjs-video, video, .a-canvas {
+      width: 100vw !important;
+      height: 100vh !important;
+      object-fit: cover !important;
+    }
+
     #speedButton {
       position: fixed;
       z-index: 9999;
@@ -76,7 +83,7 @@
     embedded
     vr-mode-ui="enabled: false"
     renderer="logarithmicDepthBuffer: true; colorManagement: true"
-    arjs="sourceType: webcam; debugUIEnabled: false;">
+    arjs="sourceType: webcam; sourceWidth: 1280; sourceHeight: 960; displayWidth: 1280; displayHeight: 960; debugUIEnabled: false;">
 
     <!-- Hiro Marker -->
     <a-marker
@@ -261,6 +268,40 @@
 
   const speedText = document.querySelector("#speedText");
   const speedButton = document.querySelector("#speedButton");
+
+
+  // ==========================================
+  // แก้ปัญหากล้องซูมเข้าใกล้เกินไป
+  // ==========================================
+  // สาเหตุ: AR.js คำนวณขนาด video/canvas ตอนโหลดครั้งแรกจาก
+  // sourceWidth/sourceHeight เทียบกับขนาดจอ ถ้าไม่ re-calculate
+  // เมื่อจอเปลี่ยนขนาด (โดยเฉพาะมือถือที่หมุนจอ หรือ browser UI
+  // ยุบ/ขยาย) ภาพจะถูก scale ผิดสัดส่วนจนดูเหมือน "ซูม"
+  // การเรียก arSystem._resize() ใหม่จะบังคับให้คำนวณ
+  // ขนาด/สัดส่วนกล้องใหม่ให้ตรงกับจอปัจจุบัน กลับสู่ระยะ 1x ปกติ
+
+  const sceneEl = document.querySelector("a-scene");
+
+  function fixArjsZoom() {
+    const arSystem = sceneEl.systems && sceneEl.systems["arjs"];
+    if (arSystem && typeof arSystem._resize === "function") {
+      arSystem._resize();
+    }
+  }
+
+  sceneEl.addEventListener("loaded", function () {
+    // เรียกซ้ำหลังโหลดเสร็จ เผื่อ webcam stream พร้อมช้ากว่า scene
+    setTimeout(fixArjsZoom, 500);
+    setTimeout(fixArjsZoom, 1500);
+  });
+
+  window.addEventListener("resize", function () {
+    setTimeout(fixArjsZoom, 300);
+  });
+
+  window.addEventListener("orientationchange", function () {
+    setTimeout(fixArjsZoom, 500);
+  });
 
 
   // ==========================================
