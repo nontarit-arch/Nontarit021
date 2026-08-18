@@ -84,31 +84,36 @@
       preset="hiro"
       emitevents="true">
 
-     <!-- เครื่องบินลำที่ 1 -->
-<a-entity
-  id="plane1"
-  position="0 0.7 0"
-  scale="0.22 0.22 0.22">
+      <!-- เครื่องบินลำที่ 1 -->
+      <a-entity
+        id="plane1"
+        position="0 0.8 0"
+        scale="0.45 0.45 0.45">
 
-<!-- เครื่องบินลำที่ 2 -->
-<a-entity
-  id="plane2"
-  position="0 0.9 0"
-  scale="0.20 0.20 0.20"
-  rotation="0 120 0">
+        <!-- ลำตัว -->
+        <a-box
+          position="0 0 0"
+          depth="1.6"
+          height="0.18"
+          width="0.22"
+          color="#eeeeee">
+        </a-box>
 
- <!-- เครื่องบินลำที่ 3 -->
-<a-entity
-  id="plane3"
-  position="0 1.1 0"
-  scale="0.18 0.18 0.18"
-  rotation="0 240 0">
+        <!-- ปีก -->
+        <a-box
+          position="0 0 0"
+          depth="0.25"
+          height="0.08"
+          width="1.8"
+          color="#2196f3">
+        </a-box>
+
         <!-- หาง -->
         <a-box
           position="0 0.08 0.65"
           depth="0.35"
-          height="0.035"
-          width="0.008"
+          height="0.35"
+          width="0.08"
           color="#1976d2">
         </a-box>
 
@@ -116,8 +121,8 @@
         <a-box
           position="0 0 0.65"
           depth="0.2"
-          height="0.005"
-          width="0.065"
+          height="0.05"
+          width="0.65"
           color="#1976d2">
         </a-box>
 
@@ -127,7 +132,7 @@
           rotation="90 0 0"
           radius-bottom="0.15"
           radius-top="0"
-          height="0.035"
+          height="0.35"
           color="#ffffff">
         </a-cone>
       </a-entity>
@@ -142,32 +147,32 @@
 
         <a-box
           depth="1.6"
-          height="0.018"
-          width="0.022"
+          height="0.18"
+          width="0.22"
           color="#eeeeee">
         </a-box>
 
         <a-box
           position="0 0 0"
           depth="0.25"
-          height="0.008"
-          width="0.18"
+          height="0.08"
+          width="1.8"
           color="#f44336">
         </a-box>
 
         <a-box
           position="0 0.08 0.65"
           depth="0.35"
-          height="0.035"
-          width="0.008"
+          height="0.35"
+          width="0.08"
           color="#c62828">
         </a-box>
 
         <a-box
           position="0 0 0.65"
           depth="0.2"
-          height="0.005"
-          width="0.065"
+          height="0.05"
+          width="0.65"
           color="#c62828">
         </a-box>
 
@@ -176,7 +181,7 @@
           rotation="90 0 0"
           radius-bottom="0.15"
           radius-top="0"
-          height="0.035"
+          height="0.35"
           color="#ffffff">
         </a-cone>
       </a-entity>
@@ -191,32 +196,32 @@
 
         <a-box
           depth="1.6"
-          height="0.018"
-          width="0.022"
+          height="0.18"
+          width="0.22"
           color="#eeeeee">
         </a-box>
 
         <a-box
           position="0 0 0"
           depth="0.25"
-          height="0.008"
-          width="0.18"
+          height="0.08"
+          width="1.8"
           color="#4caf50">
         </a-box>
 
         <a-box
           position="0 0.08 0.65"
           depth="0.35"
-          height="0.035"
-          width="0.008"
+          height="0.35"
+          width="0.08"
           color="#2e7d32">
         </a-box>
 
         <a-box
           position="0 0 0.65"
           depth="0.2"
-          height="0.005"
-          width="0.065"
+          height="0.05"
+          width="0.65"
           color="#2e7d32">
         </a-box>
 
@@ -225,7 +230,7 @@
           rotation="90 0 0"
           radius-bottom="0.15"
           radius-top="0"
-          height="0.035"
+          height="0.35"
           color="#ffffff">
         </a-cone>
       </a-entity>
@@ -327,16 +332,16 @@
         figureEight(
           time,
           phase,
-          1.25,
-          1.05
+          2.2,
+          2.0
         );
 
 
       // ความสูงแต่ละลำไม่เท่ากัน
-  const height =
-  0.65 +
-  index * 0.20 +
-  Math.sin(time * 2 + phase) * 0.08;
+      const height =
+        0.9 +
+        index * 0.35 +
+        Math.sin(time * 2 + phase) * 0.15;
 
 
       // ตั้งตำแหน่ง
@@ -356,8 +361,8 @@
         figureEight(
           nextT,
           phase,
-          1.2,
-          1.0
+          2.2,
+          2.0
         );
 
 
@@ -379,7 +384,7 @@
 
       // เอียงเครื่องบินตอนเลี้ยว
       const banking =
-        Math.sin(time + phase) * 0.1;
+        Math.sin(time + phase) * 0.25;
 
       plane.object3D.rotation.z =
         banking;
