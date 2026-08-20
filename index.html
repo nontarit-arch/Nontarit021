@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
-<!-- เพิ่มไลบรารี Cropper.js สำหรับเลือกพื้นที่รูปภาพ -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -22,18 +21,15 @@ body{margin:0;background:#f4f6f8;color:#17202a;font-family:'Kanit',sans-serif}
 .card{background:#fff;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 6px 24px rgba(0,0,0,.07)}
 .card h2{font-size:18px;margin:0 0 12px}
 
-/* ระบบสลับโหมด */
 .mode-tabs{display:flex;gap:10px;margin-bottom:15px;background:#e9eef5;padding:5px;border-radius:12px}
 .mode-btn{flex:1;background:transparent;color:#687386;border:none;padding:10px;border-radius:8px;font-weight:500;font-size:15px;transition:all 0.2s}
 .mode-btn.active{background:#fff;color:#1677ff;box-shadow:0 2px 8px rgba(0,0,0,.1)}
 
-/* โหมดกล้อง */
 .camera-wrap{position:relative;background:#111;border-radius:15px;overflow:hidden;aspect-ratio:16/10}
 video{width:100%;height:100%;object-fit:cover;display:block}
 .guide{position:absolute;left:8%;right:8%;top:42.67%;height:14.66%;border:3px solid #38bdf8;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.43);pointer-events:none}
 .guide:after{content:'จัดตัวเลขให้อยู่ในกรอบนี้';position:absolute;left:50%;top:-34px;transform:translateX(-50%);white-space:nowrap;background:#38bdf8;color:#062033;padding:3px 12px;border-radius:20px;font-size:13px}
 
-/* โหมดอัปโหลด */
 .upload-container{display:none;background:#f7f9fb;border:2px dashed #d7dee8;border-radius:15px;padding:20px;text-align:center}
 .crop-wrapper{display:none;margin-top:15px;max-height:400px;border-radius:10px;overflow:hidden;background:#111}
 #imageToCrop{display:block;max-width:100%}
@@ -72,7 +68,7 @@ select{background:#eef2f7;min-width:220px;color:#17202a;border:none}
 <div class="app">
   <div class="header">
     <h1>อ่านค่าตัวเลขจากหน้าจอ</h1>
-    <p>ถ่ายแต่ละครั้ง = ชุดข้อมูลตัวเลข 9 ตำแหน่ง (รวมจุดทศนิยม)</p>
+    <p>ระบบอ่านตัวเลขยืดหยุ่น (รองรับทุกจำนวนหลัก)</p>
   </div>
 
   <div class="card">
@@ -100,7 +96,7 @@ select{background:#eef2f7;min-width:220px;color:#17202a;border:none}
         <input type="file" id="fileInput" accept="image/*">
         เลือกรูปภาพจากเครื่อง
       </label>
-      <p style="font-size: 13px; color: #687386; margin-top: 8px;">เมื่อเลือกแล้ว ลากกรอบคลุมเฉพาะตัวเลขที่ต้องการ</p>
+      <p style="font-size: 13px; color: #687386; margin-top: 8px;">ลากกรอบคลุมเฉพาะตัวเลขที่ต้องการ</p>
       
       <div class="crop-wrapper" id="cropWrapper">
         <img id="imageToCrop" src="" alt="Picture to crop">
@@ -114,12 +110,12 @@ select{background:#eef2f7;min-width:220px;color:#17202a;border:none}
     <div class="upload-grid">
       <div class="upload-box">
         <div class="upload-title">ทางเลือก: กรอกชุดที่ 1 — ค่ามาก</div>
-        <input id="highManual" class="manual-input" type="text" inputmode="decimal" placeholder="เช่น 29148378.0">
+        <input id="highManual" class="manual-input" type="text" inputmode="decimal" placeholder="กรอกตัวเลข">
         <button id="highManualBtn" class="secondary upload-btn" type="button">บันทึกชุดที่ 1</button>
       </div>
       <div class="upload-box">
         <div class="upload-title">ทางเลือก: กรอกชุดที่ 2 — ค่าน้อย</div>
-        <input id="lowManual" class="manual-input" type="text" inputmode="decimal" placeholder="เช่น 29131626.0">
+        <input id="lowManual" class="manual-input" type="text" inputmode="decimal" placeholder="กรอกตัวเลข">
         <button id="lowManualBtn" class="secondary upload-btn" type="button">บันทึกชุดที่ 2</button>
       </div>
     </div>
@@ -177,7 +173,6 @@ select{background:#eef2f7;min-width:220px;color:#17202a;border:none}
 </div>
 
 <script>
-// Elements
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const startBtn = document.getElementById('startBtn');
@@ -197,7 +192,6 @@ const lowManual = document.getElementById('lowManual');
 const highManualBtn = document.getElementById('highManualBtn');
 const lowManualBtn = document.getElementById('lowManualBtn');
 
-// Mode Switch Elements
 const modeCameraBtn = document.getElementById('modeCameraBtn');
 const modeUploadBtn = document.getElementById('modeUploadBtn');
 const cameraSection = document.getElementById('cameraSection');
@@ -218,7 +212,6 @@ let cropper = null;
 
 function setStatus(t){ statusEl.textContent=t; }
 
-// --- การสลับโหมด กล้อง / อัปโหลด ---
 modeCameraBtn.addEventListener('click', () => {
   modeCameraBtn.classList.add('active');
   modeUploadBtn.classList.remove('active');
@@ -240,7 +233,6 @@ modeUploadBtn.addEventListener('click', () => {
   setStatus('เลือกรูปภาพจากเครื่องเพื่อเริ่มต้น');
 });
 
-// --- ระบบ Cropper (อัปโหลดรูปภาพ) ---
 fileInput.addEventListener('change', (e) => {
   const file = e.target.files[0];
   if(!file) return;
@@ -250,9 +242,8 @@ fileInput.addEventListener('change', (e) => {
   cropWrapper.style.display = 'block';
   cropActionRow.style.display = 'flex';
   
-  if(cropper) cropper.destroy(); // ล้างอันเก่าทิ้งถ้ามี
+  if(cropper) cropper.destroy();
   
-  // เริ่มการทำงานของ Cropper.js
   cropper = new Cropper(imageToCrop, {
     viewMode: 1,
     dragMode: 'crop',
@@ -280,15 +271,13 @@ readCropBtn.addEventListener('click', async () => {
     readCropBtn.disabled = true;
     readCropBtn.textContent = 'กำลังประมวลผล...';
     
-    // ดึงรูปเฉพาะส่วนที่ถูกครอบ (Crop) ออกมาเป็น Canvas
     const croppedCanvas = cropper.getCroppedCanvas();
-    setStatus(`AI OCR กำลังอ่านข้อมูลจากรูปภาพเฉพาะส่วนที่เลือก...`);
+    setStatus(`AI OCR กำลังอ่านข้อมูลจากรูปภาพ...`);
     
-    // ส่งเข้าฟังก์ชันอ่านค่า (ตัวเดียวกับที่กล้องใช้)
     const value = await recognizeCanvas(croppedCanvas);
 
     if(value === null){
-      setStatus('AI OCR อ่านไม่สำเร็จ (ลองจัดกรอบให้พอดีตัวเลขมากขึ้น) — ลองใหม่อีกครั้ง');
+      setStatus('AI OCR อ่านไม่สำเร็จ (ลองจัดกรอบให้ชัดเจนขึ้น) — ลองใหม่อีกครั้ง');
     } else {
       processReadValue(value);
     }
@@ -300,7 +289,6 @@ readCropBtn.addEventListener('click', async () => {
   }
 });
 
-// --- ระบบกล้อง (Camera) ---
 async function startCamera(){
   try{
     if(stream) stream.getTracks().forEach(t=>t.stop());
@@ -317,7 +305,7 @@ async function startCamera(){
     await video.play();
     captureBtn.disabled=false;
     switchBtn.disabled=false;
-    setStatus('พร้อมถ่าย — จัดให้อยู่ในกรอบ (จอชัดที่สุด) แล้วกด “ถ่ายรูป”');
+    setStatus('พร้อมถ่าย — จัดให้อยู่ในกรอบ แล้วกด “ถ่ายรูป”');
   }catch(e){
     setStatus('ไม่สามารถเปิดกล้องได้: '+e.message);
   }
@@ -365,7 +353,6 @@ async function captureAndRead(){
   }
 }
 
-// --- ระบบ AI OCR ---
 async function getWorker(){
   if(worker) return worker;
   setStatus('กำลังเตรียม AI OCR...');
@@ -377,10 +364,10 @@ async function getWorker(){
   return worker;
 }
 
+// ปรับปรุงให้รับตัวเลขจำนวนกี่หลักก็ได้ (ขอแค่มีตัวเลขอย่างน้อย 1 ตัว)
 function cleanNumber(text){
   const cleanedText = (text||'').replace(/[^\d.]/g, '');
-  const digitOnly = cleanedText.replace(/\./g, '');
-  if(digitOnly.length !== 9) return null;
+  if(!cleanedText || cleanedText === '.') return null;
   const value = parseFloat(cleanedText);
   if (isNaN(value)) return null;
   return value;
@@ -451,23 +438,21 @@ async function recognizeCanvas(sourceCanvas){
   return value;
 }
 
-// --- ฟังก์ชันบันทึกค่าที่ได้จากการอ่าน ---
 function processReadValue(value){
   shot++;
   if(shot === 1){
     high = value;
-    highEl.textContent = value.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+    highEl.textContent = value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
     updateCalculateButton();
     setStatus(`บันทึกชุดที่ 1 = ${highEl.textContent} แล้ว — เตรียมอ่านครั้งที่ 2 (ค่าน้อย)`);
   }else{
     low = value;
-    lowEl.textContent = value.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+    lowEl.textContent = value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
     updateCalculateButton();
     setStatus(`บันทึกชุดที่ 2 = ${lowEl.textContent} แล้ว — กด “คำนวณ”`);
   }
 }
 
-// --- ฟังก์ชันคำนวณและปุ่มต่างๆ ---
 function updateCalculateButton(){
   calculateBtn.disabled = !(high!==null && low!==null);
 }
@@ -477,9 +462,9 @@ function calculate(){
   const base = Number(baseEl.value);
   const diff = high - low;
   const pct = (diff / base) * 100;
-  diffEl.textContent = diff.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+  diffEl.textContent = diff.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
   percentEl.textContent = pct.toLocaleString('en-US',{minimumFractionDigits: 2, maximumFractionDigits: 2}) + '%';
-  formulaEl.textContent = `(${high.toFixed(1)} − ${low.toFixed(1)}) = ${diff.toFixed(1)} → ${diff.toLocaleString('en-US')} ÷ ${base.toLocaleString('en-US')} × 100`;
+  formulaEl.textContent = `(${high} − ${low}) = ${diff} → ${diff.toLocaleString('en-US')} ÷ ${base.toLocaleString('en-US')} × 100`;
   setStatus('คำนวณเรียบร้อยแล้ว');
 }
 
@@ -490,7 +475,6 @@ function resetAll(){
   formulaEl.textContent='ยังไม่มีข้อมูล';
   highManual.value=''; lowManual.value='';
   
-  // ล้างการอัปโหลด
   fileInput.value = '';
   cropWrapper.style.display = 'none';
   cropActionRow.style.display = 'none';
@@ -526,18 +510,18 @@ document.querySelectorAll('.copy-btn').forEach(btn=>{
 function saveManualValue(type){
   const input = type==='high' ? highManual : lowManual;
   const value = cleanNumber(input.value);
-  if(value===null){ setStatus('กรุณากรอกตัวเลขให้ครบ 9 หลักพอดี'); input.focus(); return; }
+  if(value===null){ setStatus('กรุณากรอกตัวเลขให้ถูกต้อง'); input.focus(); return; }
 
   if(type==='high'){
     if(high!==null){ setStatus('มีชุดที่ 1 แล้ว'); return; }
     high = value;
-    highEl.textContent = value.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+    highEl.textContent = value.toLocaleString('en-US');
     shot = Math.max(shot,1);
     setStatus(`บันทึกชุดที่ 1 (กรอกเอง) = ${highEl.textContent}`);
   }else{
     if(low!==null){ setStatus('มีชุดที่ 2 แล้ว'); return; }
     low = value;
-    lowEl.textContent = value.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+    lowEl.textContent = value.toLocaleString('en-US');
     shot = Math.max(shot,2);
     setStatus(`บันทึกชุดที่ 2 (กรอกเอง) = ${lowEl.textContent}`);
   }
