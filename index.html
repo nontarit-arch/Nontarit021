@@ -3,25 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Screen Number OCR Calculator & Report</title>
+<title>Screen Number OCR Calculator & Report (Browser Version)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-<!-- นำ Tesseract.js ออก และจะใช้ API Fetch แทน -->
+<!-- กลับมาใช้ Tesseract.js ที่ทำงานบน Browser ได้ 100% -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <style>
-/* CSS คงเดิมทั้งหมดตามที่คุณเขียนไว้ */
+/* CSS คงเดิม */
 *{box-sizing:border-box} body{margin:0;background:#f4f6f8;color:#17202a;font-family:'Kanit',sans-serif} .app{max-width:760px;margin:auto;padding:22px 16px 40px} .header{text-align:center;margin-bottom:18px} .header h1{font-size:27px;margin:0 0 4px;font-weight:600} .header p{margin:0;color:#6b7280;font-size:14px} .card{background:#fff;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 6px 24px rgba(0,0,0,.07)} .card h2{font-size:18px;margin:0 0 12px} .mode-tabs{display:flex;gap:10px;margin-bottom:15px;background:#e9eef5;padding:5px;border-radius:12px} .mode-btn{flex:1;background:transparent;color:#687386;border:none;padding:10px;border-radius:8px;font-weight:500;font-size:15px;transition:all 0.2s} .mode-btn.active{background:#fff;color:#1677ff;box-shadow:0 2px 8px rgba(0,0,0,.1)} .camera-wrap{position:relative;background:#111;border-radius:15px;overflow:hidden;aspect-ratio:16/10} video{width:100%;height:100%;object-fit:cover;display:block} .guide{position:absolute;left:8%;right:8%;top:42.67%;height:14.66%;border:3px solid #38bdf8;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.43);pointer-events:none} .guide:after{content:'จัดตัวเลขให้อยู่ในกรอบนี้';position:absolute;left:50%;top:-34px;transform:translateX(-50%);white-space:nowrap;background:#38bdf8;color:#062033;padding:3px 12px;border-radius:20px;font-size:13px} .upload-container{display:none;background:#f7f9fb;border:2px dashed #d7dee8;border-radius:15px;padding:20px;text-align:center} .crop-wrapper{display:none;margin-top:15px;max-height:400px;border-radius:10px;overflow:hidden;background:#111} #imageToCrop{display:block;max-width:100%} input[type="file"]{display:none} .custom-file-upload{display:inline-block;background:#1677ff;color:#fff;padding:12px 20px;border-radius:11px;cursor:pointer;font-weight:500;font-size:15px} .custom-file-upload:hover{background:#0e65e5} .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px} button,select,input{font-family:inherit;border-radius:11px;padding:12px 15px;font-size:15px} .capture-large{font-size:19px!important;padding:17px 30px!important;min-width:190px;box-shadow:0 5px 14px rgba(15,157,115,.25)} .upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px} .upload-box{background:#f7f9fb;border:1px solid #e1e7ef;border-radius:13px;padding:12px} .upload-title{font-size:14px;font-weight:500;margin-bottom:8px} .manual-input{width:100%;border:1px solid #d7dee8;border-radius:10px;padding:12px;font:inherit;font-size:18px;letter-spacing:2px;margin-bottom:8px;background:#fff} .upload-btn{width:100%;font-size:14px} @media(max-width:520px){.upload-grid{grid-template-columns:1fr}.capture-large{width:100%;font-size:20px!important;padding:18px!important}} button{cursor:pointer;background:#1677ff;color:#fff;font-weight:500;border:none} button.secondary{background:#e9eef5;color:#243447} button.success{background:#0f9d73} button:disabled{opacity:.5;cursor:not-allowed} .copy-btn{background:#fff;color:#17202a;padding:7px 12px;font-size:13px;border-radius:8px;font-weight:500;border:1px solid #d7dee8} .copy-btn:hover{background:#eef2f7} select{background:#eef2f7;width:100%;color:#17202a;border:none} .status{font-size:13px;color:#687386;margin-top:15px;min-height:20px;background:#fffbe6;padding:10px;border-radius:8px;border:1px solid #ffe58f} .values{display:grid;grid-template-columns:1fr 1fr;gap:12px} .value{background:#f7f9fb;border-radius:13px;padding:14px} .label{font-size:13px;color:#707b8c}.num{font-size:29px;font-weight:600;margin-top:2px;word-break:break-all} .result{background:#101828;color:#fff;border-radius:15px;padding:18px} .result .big{font-size:20px;font-weight:500;line-height:1.6;white-space:pre-wrap;font-family:inherit;} .result small{color:#b8c1ce} .formula{margin-top:9px;color:#d5dbe3;font-size:14px} @media(max-width:520px){.values{grid-template-columns:1fr}.header h1{font-size:23px}.guide{left:8%;right:8%}}
 </style>
 </head>
 <body>
-<!-- โครงสร้าง HTML คงเดิมทั้งหมด -->
 <div class="app">
   <div class="header">
     <h1>ระบบรายงานผลผลิตโรงงาน</h1>
-    <p>อ่านค่าตัวเลขและจัดรูปแบบรายงานอัตโนมัติ (Powered by PaddleOCR)</p>
+    <p>อ่านค่าตัวเลขและจัดรูปแบบรายงาน (ทำงานบนเบราว์เซอร์ 100%)</p>
   </div>
 
   <div class="card">
@@ -56,7 +56,7 @@
       </div>
       
       <div class="row" style="justify-content: center; display: none;" id="cropActionRow">
-        <button id="readCropBtn" class="success capture-large">🔍 อ่านค่าในกรอบที่เลือก</button>
+        <button id="readCropBtn" class="success capture-large">🔍 อ่านค่าในกรอบ</button>
       </div>
     </div>
 
@@ -130,7 +130,6 @@
 </div>
 
 <script>
-// ประกาศตัวแปรเดิมทั้งหมด[cite: 1]
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const startBtn = document.getElementById('startBtn');
@@ -165,87 +164,57 @@ let facing = 'environment';
 let shot = 0;
 let high = null;
 let low = null;
+let worker = null;
 let cropper = null;
-
-// URL ของ Backend API ที่รัน PaddleOCR (ต้องแก้ให้ตรงกับเซิร์ฟเวอร์ของคุณ)
-const API_URL = 'http://localhost:5000/api/ocr';
 
 function setStatus(t){ statusEl.textContent=t; }
 
 modeCameraBtn.addEventListener('click', () => {
-  modeCameraBtn.classList.add('active');
-  modeUploadBtn.classList.remove('active');
-  cameraSection.style.display = 'block';
-  uploadSection.style.display = 'none';
+  modeCameraBtn.classList.add('active'); modeUploadBtn.classList.remove('active');
+  cameraSection.style.display = 'block'; uploadSection.style.display = 'none';
   setStatus('กด “เปิดกล้อง” เพื่อใช้งานผ่านกล้อง');
 });
 
 modeUploadBtn.addEventListener('click', () => {
-  modeUploadBtn.classList.add('active');
-  modeCameraBtn.classList.remove('active');
-  cameraSection.style.display = 'none';
-  uploadSection.style.display = 'block';
-  if(stream) {
-    stream.getTracks().forEach(t=>t.stop());
-    captureBtn.disabled = true;
-    switchBtn.disabled = true;
-  }
+  modeUploadBtn.classList.add('active'); modeCameraBtn.classList.remove('active');
+  cameraSection.style.display = 'none'; uploadSection.style.display = 'block';
+  if(stream) { stream.getTracks().forEach(t=>t.stop()); captureBtn.disabled = true; switchBtn.disabled = true; }
   setStatus('เลือกรูปภาพจากเครื่องเพื่อเริ่มต้น');
 });
 
 fileInput.addEventListener('change', (e) => {
   const file = e.target.files[0];
   if(!file) return;
-
   const url = URL.createObjectURL(file);
   imageToCrop.src = url;
-  cropWrapper.style.display = 'block';
-  cropActionRow.style.display = 'flex';
+  cropWrapper.style.display = 'block'; cropActionRow.style.display = 'flex';
   
   if(cropper) cropper.destroy();
-  
   cropper = new Cropper(imageToCrop, {
-    viewMode: 1,
-    dragMode: 'crop',
-    autoCropArea: 0.5,
-    restore: false,
-    guides: true,
-    center: true,
-    highlight: false,
-    cropBoxMovable: true,
-    cropBoxResizable: true,
-    toggleDragModeOnDblclick: false,
+    viewMode: 1, dragMode: 'crop', autoCropArea: 0.8, restore: false, guides: true, center: true, highlight: false, cropBoxMovable: true, cropBoxResizable: true, toggleDragModeOnDblclick: false,
   });
-  
   setStatus('ลากปรับขนาดกรอบให้คลุมเฉพาะ "ตัวเลข" ที่ต้องการ แล้วกด "อ่านค่าในกรอบที่เลือก"');
 });
 
 readCropBtn.addEventListener('click', async () => {
   if(!cropper) return;
-  if(high!==null && low!==null){
-    setStatus('มีข้อมูลครบ 2 ชุดแล้ว — กด “เริ่มใหม่” เพื่อเริ่มใหม่');
-    return;
-  }
+  if(high!==null && low!==null){ setStatus('มีข้อมูลครบ 2 ชุดแล้ว'); return; }
 
   try {
-    readCropBtn.disabled = true;
-    readCropBtn.textContent = 'กำลังประมวลผล...';
-    
+    readCropBtn.disabled = true; readCropBtn.textContent = 'กำลังประมวลผล...';
     const croppedCanvas = cropper.getCroppedCanvas();
-    setStatus(`PaddleOCR กำลังอ่านข้อมูลจากรูปภาพ...`);
-    
+    setStatus(`ระบบกำลังสแกนตัวเลข... (ใช้เวลาสักครู่)`);
     const value = await recognizeCanvas(croppedCanvas);
 
     if(value === null){
-      setStatus('PaddleOCR อ่านไม่สำเร็จ (ลองจัดกรอบให้ชัดเจนขึ้น) — ลองใหม่อีกครั้ง');
+      setStatus('อ่านไม่สำเร็จ (กรุณาครอบเฉพาะตัวเลข และหลีกเลี่ยงแสงสะท้อน)');
     } else {
       processReadValue(value);
     }
   } catch (e) {
-    setStatus('เกิดข้อผิดพลาดในการอ่านรูป: ' + e.message);
+    setStatus('เกิดข้อผิดพลาด: ' + e.message);
   } finally {
-    readCropBtn.disabled = false;
-    readCropBtn.innerHTML = '🔍 อ่านค่าในกรอบที่เลือก';
+    readCropBtn.disabled = false; readCropBtn.innerHTML = '🔍 อ่านค่าในกรอบ';
   }
 });
 
@@ -253,22 +222,12 @@ async function startCamera(){
   try{
     if(stream) stream.getTracks().forEach(t=>t.stop());
     stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { ideal: facing },
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
-        advanced: [{ focusMode: "continuous" }]
-      },
-      audio: false
+      video: { facingMode: { ideal: facing }, width: { ideal: 1920 }, height: { ideal: 1080 }, advanced: [{ focusMode: "continuous" }] }, audio: false
     });
-    video.srcObject=stream;
-    await video.play();
-    captureBtn.disabled=false;
-    switchBtn.disabled=false;
-    setStatus('พร้อมถ่าย — จัดให้อยู่ในกรอบ แล้วกด “ถ่ายรูป”');
-  }catch(e){
-    setStatus('ไม่สามารถเปิดกล้องได้: '+e.message);
-  }
+    video.srcObject=stream; await video.play();
+    captureBtn.disabled=false; switchBtn.disabled=false;
+    setStatus('พร้อมถ่าย — จัดตัวเลขให้พอดีกรอบ แล้วกด “ถ่ายรูป”');
+  }catch(e){ setStatus('ไม่สามารถเปิดกล้องได้: '+e.message); }
 }
 
 async function captureAndRead(){
@@ -281,39 +240,46 @@ async function captureAndRead(){
     const guideRect = document.querySelector('.guide').getBoundingClientRect();
     const vw = video.videoWidth, vh = video.videoHeight;
     const scale = Math.max(videoRect.width / vw, videoRect.height / vh);
-    const renderedWidth = vw * scale;
-    const renderedHeight = vh * scale;
-    const offsetX = (renderedWidth - videoRect.width) / 2;
-    const offsetY = (renderedHeight - videoRect.height) / 2;
-    const guideX = guideRect.left - videoRect.left;
-    const guideY = guideRect.top - videoRect.top;
+    const renderedWidth = vw * scale; const renderedHeight = vh * scale;
+    const offsetX = (renderedWidth - videoRect.width) / 2; const offsetY = (renderedHeight - videoRect.height) / 2;
+    const guideX = guideRect.left - videoRect.left; const guideY = guideRect.top - videoRect.top;
     
-    const sx = (guideX + offsetX) / scale;
-    const sy = (guideY + offsetY) / scale;
-    const sw = guideRect.width / scale;
-    const sh = guideRect.height / scale;
+    const sx = (guideX + offsetX) / scale; const sy = (guideY + offsetY) / scale;
+    const sw = guideRect.width / scale; const sh = guideRect.height / scale;
 
-    canvas.width = sw; 
-    canvas.height = sh;
+    canvas.width = sw; canvas.height = sh;
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
 
-    setStatus(`PaddleOCR กำลังอ่านภาพจากกล้อง...`);
+    setStatus(`ระบบกำลังสแกนตัวเลขจากภาพ...`);
     const value = await recognizeCanvas(canvas);
 
     if(value === null){
-      setStatus('PaddleOCR อ่านไม่สำเร็จ (กรุณาจัดเป้าหมายให้อยู่กลางกรอบ) — ถ่ายใหม่หรือกรอกแทน');
+      setStatus('อ่านภาพไม่สำเร็จ — ถ่ายให้ชัดเจนขึ้น หรือกรอกข้อมูลด้วยตนเองด้านล่าง');
     } else {
       processReadValue(value);
     }
   }catch(e){
-    setStatus('เกิดข้อผิดพลาดในการอ่าน: '+e.message);
+    setStatus('เกิดข้อผิดพลาด: '+e.message);
   }finally{
     captureBtn.disabled=false;
   }
 }
 
-// ฟังก์ชันกรองเฉพาะตัวเลข คงเดิมจากโค้ดของคุณ[cite: 1]
+// ------------------------------------------------------------------
+// อัปเกรดระบบตั้งค่า Tesseract.js ให้บังคับอ่านแต่ตัวเลขแบบบรรทัดเดียว
+// ------------------------------------------------------------------
+async function getWorker(){
+  if(worker) return worker;
+  setStatus('กำลังโหลด AI (ทำครั้งเดียว)...');
+  worker = await Tesseract.createWorker('eng');
+  await worker.setParameters({
+    tessedit_char_whitelist: '0123456789.',
+    tessedit_pageseg_mode: '7' // โหมดบรรทัดเดียว (Single Text Line) แม่นยำที่สุดสำหรับหน้าจอ
+  });
+  return worker;
+}
+
 function cleanNumber(text){
   const cleanedText = (text||'').replace(/[^\d.]/g, '');
   if(!cleanedText || cleanedText === '.') return null;
@@ -322,32 +288,60 @@ function cleanNumber(text){
   return value;
 }
 
-// นำการทำงานของ PaddleOCR มาเชื่อมต่อแทน Tesseract[cite: 1]
-async function recognizeCanvas(sourceCanvas){
-  return new Promise((resolve) => {
-    sourceCanvas.toBlob(async (blob) => {
-      const formData = new FormData();
-      formData.append('image', blob, 'capture.jpg');
+// ------------------------------------------------------------------
+// อัปเกรดระบบปรับภาพ (Preprocessing) ขาวดำ + เพิ่ม Contrast ขั้นสุด
+// ------------------------------------------------------------------
+function preprocessImage(sourceCanvas, invert = false){
+  const scale = 2; // ขยายภาพให้ AI มองเห็นชัดขึ้น
+  const out = document.createElement('canvas');
+  out.width = sourceCanvas.width * scale; out.height = sourceCanvas.height * scale;
+  const ctx = out.getContext('2d');
+  ctx.imageSmoothingEnabled = false; // ปิดความเบลอ
+  ctx.drawImage(sourceCanvas, 0, 0, out.width, out.height);
 
-      try {
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          body: formData
-        });
-        
-        if (!response.ok) {
-          throw new Error('API Response Error');
-        }
-        
-        const data = await response.json();
-        // ทำความสะอาดผลลัพธ์ที่ได้มาจาก Backend[cite: 1]
-        resolve(cleanNumber(data.text)); 
-      } catch (error) {
-        console.error('OCR Error:', error);
-        resolve(null);
-      }
-    }, 'image/jpeg', 0.95);
-  });
+  const imgData = ctx.getImageData(0, 0, out.width, out.height);
+  const data = imgData.data;
+
+  // ปรับ Contrast และทำ Binarization
+  for (let i = 0; i < data.length; i += 4) {
+    // แปลงเป็นขาวดำ
+    let brightness = (data[i] * 0.299) + (data[i + 1] * 0.587) + (data[i + 2] * 0.114);
+    
+    // ตั้งค่าความเข้ม (Threshold)
+    if(invert) {
+        brightness = brightness < 128 ? 255 : 0; // แบบสลับสี (สำหรับหน้าจอพื้นดำตัวหนังสือสว่าง)
+    } else {
+        brightness = brightness < 128 ? 0 : 255; // แบบปกติ
+    }
+    
+    data[i] = data[i + 1] = data[i + 2] = brightness;
+  }
+  ctx.putImageData(imgData, 0, 0);
+  return out;
+}
+
+async function recognizeCanvas(sourceCanvas){
+  const w = await getWorker();
+  
+  // พยายามอ่านแบบปกติ (พื้นหลังสว่าง ตัวหนังสือมืด)
+  let processed = preprocessImage(sourceCanvas, false);
+  let result = await w.recognize(processed);
+  let value = cleanNumber(result.data.text);
+
+  // ถ้าอ่านไม่ได้ ให้ลองแบบ Invert (พื้นหลังมืด ตัวหนังสือสว่าง - เช่นจอ LED/LCD)
+  if(value === null){
+    processed = preprocessImage(sourceCanvas, true);
+    result = await w.recognize(processed);
+    value = cleanNumber(result.data.text);
+  }
+  
+  // ถ้ายังไม่ได้อีก ให้ลองใช้ภาพดิบๆ ทื่อๆ เลย
+  if(value === null){
+    result = await w.recognize(sourceCanvas);
+    value = cleanNumber(result.data.text);
+  }
+  
+  return value;
 }
 
 function processReadValue(value){
@@ -365,9 +359,7 @@ function processReadValue(value){
   }
 }
 
-function updateCalculateButton(){
-  calculateBtn.disabled = !(high!==null && low!==null);
-}
+function updateCalculateButton(){ calculateBtn.disabled = !(high!==null && low!==null); }
 
 function calculate(){
   if(high===null || low===null) return;
@@ -397,13 +389,10 @@ function calculate(){
 function resetAll(){
   shot=0; high=null; low=null;
   highEl.textContent='—'; lowEl.textContent='—';
-  reportOutput.textContent='ยังไม่มีข้อมูลรายงาน';
-  formulaEl.textContent='';
+  reportOutput.textContent='ยังไม่มีข้อมูลรายงาน'; formulaEl.textContent='';
   highManual.value=''; lowManual.value='';
   
-  fileInput.value = '';
-  cropWrapper.style.display = 'none';
-  cropActionRow.style.display = 'none';
+  fileInput.value = ''; cropWrapper.style.display = 'none'; cropActionRow.style.display = 'none';
   if(cropper){ cropper.destroy(); cropper = null; }
 
   updateCalculateButton();
@@ -440,15 +429,11 @@ function saveManualValue(type){
 
   if(type==='high'){
     if(high!==null){ setStatus('มีชุดที่ 1 แล้ว'); return; }
-    high = value;
-    highEl.textContent = value.toLocaleString('en-US');
-    shot = Math.max(shot,1);
+    high = value; highEl.textContent = value.toLocaleString('en-US'); shot = Math.max(shot,1);
     setStatus(`บันทึกชุดที่ 1 (กรอกเอง) = ${highEl.textContent}`);
   }else{
     if(low!==null){ setStatus('มีชุดที่ 2 แล้ว'); return; }
-    low = value;
-    lowEl.textContent = value.toLocaleString('en-US');
-    shot = Math.max(shot,2);
+    low = value; lowEl.textContent = value.toLocaleString('en-US'); shot = Math.max(shot,2);
     setStatus(`บันทึกชุดที่ 2 (กรอกเอง) = ${lowEl.textContent}`);
   }
   updateCalculateButton();
@@ -461,7 +446,7 @@ lowManual.addEventListener('input',()=>{ lowManual.value=lowManual.value.replace
 
 window.addEventListener('beforeunload',()=>{
   if(stream) stream.getTracks().forEach(t=>t.stop());
-  // ลบคำสั่งปิด worker ของ Tesseract ออก[cite: 1]
+  if(worker) worker.terminate();
 });
 </script>
 </body>
