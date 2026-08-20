@@ -26,7 +26,9 @@ body{margin:0;background:#f4f6f8;color:#17202a;font-family:'Kanit',sans-serif}
 .mode-btn.active{background:#fff;color:#1677ff;box-shadow:0 2px 8px rgba(0,0,0,.1)}
 
 .camera-wrap{position:relative;background:#111;border-radius:15px;overflow:hidden;aspect-ratio:16/10}
-video{width:100%;height:100%;object-fit:cover;display:block}
+video, #capturedImageView{width:100%;height:100%;object-fit:cover;display:block}
+#capturedImageView{display:none;}
+
 .guide{position:absolute;left:8%;right:8%;top:42.67%;height:14.66%;border:3px solid #38bdf8;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.43);pointer-events:none}
 .guide:after{content:'จัดตัวเลขให้อยู่ในกรอบนี้';position:absolute;left:50%;top:-34px;transform:translateX(-50%);white-space:nowrap;background:#38bdf8;color:#062033;padding:3px 12px;border-radius:20px;font-size:13px}
 
@@ -72,7 +74,7 @@ select{background:#eef2f7;width:100%;color:#17202a;border:none}
 <div class="app">
   <div class="header">
     <h1>ระบบรายงานผลผลิตโรงงาน</h1>
-    <p>อ่านค่าตัวเลขยืดหยุ่น & ซูมกล้องได้</p>
+    <p>ถ่ายภาพนิ่งเพื่อประมวลผล OCR อัตโนมัติ</p>
   </div>
 
   <div class="card">
@@ -83,9 +85,10 @@ select{background:#eef2f7;width:100%;color:#17202a;border:none}
 
     <!-- โหมดกล้องถ่ายรูป -->
     <div id="cameraSection">
-      <div class="camera-wrap">
+      <div class="camera-wrap" id="cameraWrap">
         <video id="video" autoplay playsinline muted></video>
-        <div class="guide"></div>
+        <img id="capturedImageView" alt="Captured Image">
+        <div class="guide" id="guideBox"></div>
       </div>
       
       <!-- แถบซูมกล้อง -->
@@ -96,7 +99,8 @@ select{background:#eef2f7;width:100%;color:#17202a;border:none}
 
       <div class="row">
         <button id="startBtn">เปิดกล้อง</button>
-        <button id="captureBtn" class="success capture-large" disabled>📷 ถ่ายรูป</button>
+        <button id="captureBtn" class="success capture-large" disabled>📷 ถ่ายรูปและอ่านค่า</button>
+        <button id="retakeBtn" class="secondary" style="display:none;">ถ่ายใหม่</button>
         <button id="switchBtn" class="secondary" disabled>สลับกล้อง</button>
       </div>
     </div>
@@ -131,7 +135,7 @@ select{background:#eef2f7;width:100%;color:#17202a;border:none}
       </div>
     </div>
     
-    <div id="status" class="status">กด “เปิดกล้อง” หรือ “อัปโหลดรูปภาพ” เพื่อเริ่มใช้งาน</div>
+    <div id="status" class="status">กด “เปิดกล้อง” เพื่อเริ่มใช้งาน</div>
     <canvas id="canvas" style="display:none"></canvas>
   </div>
 
@@ -189,9 +193,12 @@ select{background:#eef2f7;width:100%;color:#17202a;border:none}
 
 <script>
 const video = document.getElementById('video');
+const capturedImageView = document.getElementById('capturedImageView');
+const guideBox = document.getElementById('guideBox');
 const canvas = document.getElementById('canvas');
 const startBtn = document.getElementById('startBtn');
 const captureBtn = document.getElementById('captureBtn');
+const retakeBtn = document.getElementById('retakeBtn');
 const switchBtn = document.getElementById('switchBtn');
 const statusEl = document.getElementById('status');
 const highEl = document.getElementById('high');
@@ -313,6 +320,14 @@ readCropBtn.addEventListener('click', async () => {
 async function startCamera(){
   try{
     if(stream) stream.getTracks().forEach(t=>t.stop());
+    
+    // รีเซ็ตการแสดงผลภาพนิ่งกลับมาเป็น Live Video
+    capturedImageView.style.display = 'none';
+    video.style.display = 'block';
+    guideBox.style.display = 'block';
+    captureBtn.style.display = 'inline-block';
+    retakeBtn.style.display = 'none';
+
     stream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: { ideal: facing },
@@ -328,7 +343,6 @@ async function startCamera(){
     captureBtn.disabled = false;
     switchBtn.disabled = false;
 
-    // ตั้งค่าระบบซูมกล้อง
     videoTrack = stream.getVideoTracks()[0];
     const capabilities = videoTrack.getCapabilities();
     const settings = videoTrack.getSettings();
@@ -344,13 +358,12 @@ async function startCamera(){
       zoomContainer.style.display = 'none';
     }
 
-    setStatus('พร้อมถ่าย — จัดให้อยู่ในกรอบ แล้วกด “ถ่ายรูป”');
+    setStatus('พร้อมถ่าย — จัดให้อยู่ในกรอบ แล้วกด “ถ่ายรูปและอ่านค่า”');
   }catch(e){
     setStatus('ไม่สามารถเปิดกล้องได้: '+e.message);
   }
 }
 
-// ควบคุมการซูมเมื่อเลื่อน Range Slider
 zoomRange.addEventListener('input', async (e) => {
   if (!videoTrack) return;
   const val = parseFloat(e.target.value);
@@ -368,10 +381,13 @@ async function captureAndRead(){
   if(!video.videoWidth) return;
   if(high!==null && low!==null){ setStatus('มีข้อมูลครบแล้ว'); return; }
 
-  captureBtn.disabled=true;
+  captureBtn.disabled = true;
+  switchBtn.disabled = true;
+
   try{
+    // 1. ดึงตำแหน่งกรอบมาตัดรูปภาพลง Canvas
     const videoRect = video.getBoundingClientRect();
-    const guideRect = document.querySelector('.guide').getBoundingClientRect();
+    const guideRect = guideBox.getBoundingClientRect();
     const vw = video.videoWidth, vh = video.videoHeight;
     const scale = Math.max(videoRect.width / vw, videoRect.height / vh);
     const renderedWidth = vw * scale;
@@ -391,20 +407,44 @@ async function captureAndRead(){
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
 
-    setStatus(`AI OCR กำลังอ่านภาพจากกล้อง...`);
+    // 2. แปลงรูปใน Canvas เป็นภาพนิ่งแสดงผลให้ผู้ใช้เห็นทันที
+    const capturedDataUrl = canvas.toDataURL('image/png');
+    capturedImageView.src = capturedDataUrl;
+    video.style.display = 'none';
+    capturedImageView.style.display = 'block';
+    guideBox.style.display = 'none'; // ซ่อนกรอบไกด์เมื่อถ่ายแล้ว
+    
+    captureBtn.style.display = 'none';
+    retakeBtn.style.display = 'inline-block';
+
+    setStatus(`AI OCR กำลังประมวลผลอ่านตัวเลขจากภาพที่ถ่าย...`);
+    
+    // 3. ส่งภาพจาก Canvas ไปให้ระบบ OCR ประมวลผลต่อ
     const value = await recognizeCanvas(canvas);
 
     if(value === null){
-      setStatus('AI OCR อ่านไม่สำเร็จ (กรุณาจัดเป้าหมายให้อยู่กลางกรอบ) — ถ่ายใหม่หรือกรอกแทน');
+      setStatus('AI OCR อ่านไม่สำเร็จ — กรุณากด "ถ่ายใหม่" หรือกรอกตัวเลขด้วยตนเอง');
     } else {
       processReadValue(value);
     }
   }catch(e){
-    setStatus('เกิดข้อผิดพลาดในการอ่าน: '+e.message);
-  }finally{
-    captureBtn.disabled=false;
+    setStatus('เกิดข้อผิดพลาดในการอ่านภาพ: '+e.message);
+    captureBtn.disabled = false;
+    switchBtn.disabled = false;
   }
 }
+
+retakeBtn.addEventListener('click', () => {
+  // สลับกลับมาเปิด Live Video ให้ถ่ายใหม่
+  capturedImageView.style.display = 'none';
+  video.style.display = 'block';
+  guideBox.style.display = 'block';
+  retakeBtn.style.display = 'none';
+  captureBtn.style.display = 'inline-block';
+  captureBtn.disabled = false;
+  switchBtn.disabled = false;
+  setStatus('พร้อมถ่ายใหม่ — จัดเป้าหมายแล้วกด “ถ่ายรูปและอ่านค่า”');
+});
 
 async function getWorker(){
   if(worker) return worker;
@@ -496,7 +536,7 @@ function processReadValue(value){
     high = value;
     highEl.textContent = value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
     updateCalculateButton();
-    setStatus(`บันทึกชุดที่ 1 = ${highEl.textContent} แล้ว — เตรียมอ่านครั้งที่ 2 (ค่าน้อย)`);
+    setStatus(`บันทึกชุดที่ 1 = ${highEl.textContent} แล้ว — กด “ถ่ายใหม่” เพื่อถ่ายครั้งที่ 2 (ค่าน้อย)`);
   }else{
     low = value;
     lowEl.textContent = value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
@@ -549,6 +589,13 @@ function resetAll(){
   cropWrapper.style.display = 'none';
   cropActionRow.style.display = 'none';
   if(cropper){ cropper.destroy(); cropper = null; }
+
+  // รีเซ็ตมุมมองกล้อง
+  capturedImageView.style.display = 'none';
+  video.style.display = 'block';
+  guideBox.style.display = 'block';
+  retakeBtn.style.display = 'none';
+  captureBtn.style.display = 'inline-block';
 
   updateCalculateButton();
   setStatus('รีเซ็ตข้อมูลแล้ว — เลือกเปิดกล้อง หรืออัปโหลดรูปภาพเพื่อเริ่มใหม่');
