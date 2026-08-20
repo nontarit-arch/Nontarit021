@@ -29,16 +29,14 @@ button,select,input{font-family:inherit;border-radius:11px;padding:12px 15px;fon
 .upload-title{font-size:14px;font-weight:500;margin-bottom:8px}
 .manual-input{width:100%;border:1px solid #d7dee8;border-radius:10px;padding:12px;font:inherit;font-size:18px;letter-spacing:2px;margin-bottom:8px;background:#fff}
 .upload-btn{width:100%;font-size:14px}
-.file-name{font-size:12px;color:#7a8494;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media(max-width:520px){.upload-grid{grid-template-columns:1fr}.capture-large{width:100%;font-size:20px!important;padding:18px!important}}
-
-button{cursor:pointer;background:#1677ff;color:#fff;font-weight:500}
+button{cursor:pointer;background:#1677ff;color:#fff;font-weight:500;border:none}
 button.secondary{background:#e9eef5;color:#243447}
 button.success{background:#0f9d73}
 button:disabled{opacity:.5;cursor:not-allowed}
-.copy-btn{background:#fff;color:#17202a;padding:7px 12px;font-size:13px;border-radius:8px;font-weight:500}
+.copy-btn{background:#fff;color:#17202a;padding:7px 12px;font-size:13px;border-radius:8px;font-weight:500;border:1px solid #d7dee8}
 .copy-btn:hover{background:#eef2f7}
-select{background:#eef2f7;min-width:220px;color:#17202a}
+select{background:#eef2f7;min-width:220px;color:#17202a;border:none}
 .status{font-size:13px;color:#687386;margin-top:10px;min-height:20px}
 .values{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .value{background:#f7f9fb;border-radius:13px;padding:14px}
@@ -72,14 +70,12 @@ select{background:#eef2f7;min-width:220px;color:#17202a}
     <div class="upload-grid">
       <div class="upload-box">
         <div class="upload-title">ทางเลือก: กรอกชุดข้อมูลที่ 1 — ค่ามาก (9 ตำแหน่ง)</div>
-        <input id="highManual" class="manual-input" type="text" inputmode="numeric"
-               maxlength="9" pattern="[0-9]{9}" placeholder="กรอกตัวเลข 9 หลัก">
+        <input id="highManual" class="manual-input" type="text" inputmode="numeric" maxlength="9" pattern="[0-9]{9}" placeholder="กรอกตัวเลข 9 หลัก">
         <button id="highManualBtn" class="secondary upload-btn" type="button">บันทึกชุดข้อมูลที่ 1</button>
       </div>
       <div class="upload-box">
         <div class="upload-title">ทางเลือก: กรอกชุดข้อมูลที่ 2 — ค่าน้อย (9 ตำแหน่ง)</div>
-        <input id="lowManual" class="manual-input" type="text" inputmode="numeric"
-               maxlength="9" pattern="[0-9]{9}" placeholder="กรอกตัวเลข 9 หลัก">
+        <input id="lowManual" class="manual-input" type="text" inputmode="numeric" maxlength="9" pattern="[0-9]{9}" placeholder="กรอกตัวเลข 9 หลัก">
         <button id="lowManualBtn" class="secondary upload-btn" type="button">บันทึกชุดข้อมูลที่ 2</button>
       </div>
     </div>
@@ -135,9 +131,7 @@ select{background:#eef2f7;min-width:220px;color:#17202a}
   </div>
 
   <div class="card note">
-    <b>หมายเหตุ:</b> ทุกการถ่าย 1 ครั้งถือเป็นข้อมูล 1 ชุด และ AI OCR จะอ่านตัวเลขอัตโนมัติ และต้องอ่านได้ตัวเลข 9 ตำแหน่งพอดี โดยครั้งที่ 1 เป็นค่ามาก ครั้งที่ 2 เป็นค่าน้อย จากนั้นกด “คำนวณ” เพื่อหาผลต่าง กล้องจะมีกรอบเฉพาะพื้นที่ที่ต้องการอ่าน
-    เพื่อช่วยลดการอ่านตัวเลขอื่นที่อยู่นอกกรอบ หาก AI OCR อ่านไม่สำเร็จ สามารถกรอกตัวเลข 9 หลักในช่องทางเลือกแทนได้ ควรให้ตัวเลขชัด สว่าง และอยู่ภายในกรอบ
-    การใช้งานกล้องต้องเปิดผ่าน HTTPS หรือ localhost ในเบราว์เซอร์ที่อนุญาตการใช้กล้อง
+    <b>หมายเหตุ:</b> ทุกการถ่าย 1 ครั้งถือเป็นข้อมูล 1 ชุด และ AI OCR จะอ่านตัวเลขอัตโนมัติ ต้องอ่านได้ 9 ตำแหน่งพอดี หากถ่ายไม่สำเร็จสามารถกรอกทางเลือกแทนได้
   </div>
 </div>
 
@@ -168,16 +162,19 @@ let high = null;
 let low = null;
 let worker = null;
 
-// ต้องอ่านครบทั้งค่ามากและค่าน้อยก่อน จึงจะกดคำนวณได้
-
 function setStatus(t){ statusEl.textContent=t; }
 
 async function startCamera(){
   try{
     if(stream) stream.getTracks().forEach(t=>t.stop());
     stream = await navigator.mediaDevices.getUserMedia({
-      video:{facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:720}},
-      audio:false
+      video: {
+        facingMode: { ideal: facing },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        advanced: [{ focusMode: "continuous" }] // บังคับโฟกัสอัตโนมัติตลอดเวลา
+      },
+      audio: false
     });
     video.srcObject=stream;
     await video.play();
@@ -194,55 +191,78 @@ async function getWorker(){
   setStatus('กำลังเตรียม AI OCR สำหรับอ่านตัวเลขครั้งแรก...');
   worker = await Tesseract.createWorker('eng');
   await worker.setParameters({
-    tessedit_char_whitelist:'0123456789,.-',
-    tessedit_pageseg_mode:'7'
+    tessedit_char_whitelist: '0123456789', // กรองเฉพาะตัวเลขเพื่อลดความสับสน
+    tessedit_pageseg_mode: '7' // โหมดบรรทัดเดียว (Single Line)
   });
   return worker;
 }
 
 function cleanNumber(text){
-  // ทุกภาพต้องได้ข้อมูลตัวเลข 9 ตำแหน่งพอดี
-  // ตัดเครื่องหมาย/ช่องว่างออก แต่เก็บเฉพาะตัวเลข
   const digits = (text||'').replace(/[^\d]/g,'');
-
   if(digits.length !== 9) return null;
-
-  // เก็บเป็น Number สำหรับการลบระหว่างชุดข้อมูล
   return Number(digits);
 }
 
-
+// อัปเกรดการทำภาพให้ชัดเจนขึ้นด้วย Adaptive Thresholding
 function preprocessImage(sourceCanvas){
-  const w=sourceCanvas.width, h=sourceCanvas.height;
-  const out=document.createElement('canvas');
-  out.width=w*2; out.height=h*2;
-  const ctx=out.getContext('2d',{willReadFrequently:true});
-  ctx.imageSmoothingEnabled=true;
-  ctx.drawImage(sourceCanvas,0,0,out.width,out.height);
+  const w = sourceCanvas.width;
+  const h = sourceCanvas.height;
+  const scale = 3; // ขยายภาพเพื่อให้ตัวเลขชัดขึ้น
+  const out = document.createElement('canvas');
+  out.width = w * scale;
+  out.height = h * scale;
+  
+  const ctx = out.getContext('2d', { willReadFrequently: true });
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(sourceCanvas, 0, 0, out.width, out.height);
 
-  const img=ctx.getImageData(0,0,out.width,out.height);
-  const d=img.data;
-  for(let i=0;i<d.length;i+=4){
-    const gray=(0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]);
-    // Stronger local contrast for digital/industrial displays.
-    const v=gray>150?255:gray<90?0:Math.round((gray-90)*255/60);
-    d[i]=d[i+1]=d[i+2]=v;
+  const imgData = ctx.getImageData(0, 0, out.width, out.height);
+  const data = imgData.data;
+  
+  const kernelSize = 15;
+  const c = 10;
+  const luma = new Uint8ClampedArray(out.width * out.height);
+  
+  for (let i = 0; i < data.length; i += 4) {
+    luma[i / 4] = (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
   }
-  ctx.putImageData(img,0,0);
+
+  for (let y = 0; y < out.height; y++) {
+    for (let x = 0; x < out.width; x++) {
+      const idx = (y * out.width + x);
+      let sum = 0;
+      let count = 0;
+      
+      for (let ky = -Math.floor(kernelSize / 2); ky <= Math.floor(kernelSize / 2); ky++) {
+        for (let kx = -Math.floor(kernelSize / 2); kx <= Math.floor(kernelSize / 2); kx++) {
+          const iy = y + ky;
+          const ix = x + kx;
+          if (iy >= 0 && iy < out.height && ix >= 0 && ix < out.width) {
+            sum += luma[iy * out.width + ix];
+            count++;
+          }
+        }
+      }
+      const mean = sum / count;
+      const v = luma[idx] < (mean - c) ? 0 : 255;
+      data[idx * 4] = data[idx * 4 + 1] = data[idx * 4 + 2] = v;
+    }
+  }
+
+  ctx.putImageData(imgData, 0, 0);
   return out;
 }
 
 async function recognizeCanvas(sourceCanvas){
-  const w=await getWorker();
-  // First pass: enhanced image.
-  const processed=preprocessImage(sourceCanvas);
-  let result=await w.recognize(processed);
-  let value=cleanNumber(result.data.text);
+  const w = await getWorker();
+  const processed = preprocessImage(sourceCanvas);
+  let result = await w.recognize(processed);
+  let value = cleanNumber(result.data.text);
 
-  // Second pass on original crop if first pass fails.
-  if(value===null){
-    result=await w.recognize(sourceCanvas);
-    value=cleanNumber(result.data.text);
+  if(value === null){
+    result = await w.recognize(sourceCanvas);
+    value = cleanNumber(result.data.text);
   }
   return value;
 }
@@ -261,7 +281,6 @@ async function captureAndRead(){
 
   captureBtn.disabled=true;
   try{
-    // ถ่ายภาพบริเวณกรอบตัวเลข
     const vw=video.videoWidth, vh=video.videoHeight;
     const sx=Math.round(vw*0.08), sy=Math.round(vh*0.4267);
     const sw=Math.round(vw*0.84), sh=Math.round(vh*0.1466);
@@ -281,17 +300,13 @@ async function captureAndRead(){
     shot++;
 
     if(shot===1){
-      // ภาพครั้งที่ 1 = ชุดข้อมูลค่ามาก
       high=value;
       highEl.textContent=value.toString();
-      
       updateCalculateButton();
       setStatus(`บันทึกชุดที่ 1 = ${value.toString()} แล้ว — ถ่ายครั้งที่ 2 เป็นชุดข้อมูลค่าน้อย`);
     }else{
-      // ภาพครั้งที่ 2 = ชุดข้อมูลค่าน้อย
       low=value;
       lowEl.textContent=value.toString();
-      
       updateCalculateButton();
       setStatus(`บันทึกชุดที่ 2 = ${value.toString()} แล้ว — กด “คำนวณ” เพื่อลบชุดที่ 1 − ชุดที่ 2`);
     }
@@ -313,7 +328,7 @@ function calculate(){
   }
 
   const base=Number(baseEl.value);
-  const diff=high-low; // ชุดข้อมูลครั้งที่ 1 − ชุดข้อมูลครั้งที่ 2
+  const diff=high-low;
   const pct=(diff/base)*100;
 
   diffEl.textContent=diff.toLocaleString('en-US');
