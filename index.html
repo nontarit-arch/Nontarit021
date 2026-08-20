@@ -7,7 +7,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<!-- เพิ่มไลบรารี Cropper.js สำหรับเลือกพื้นที่รูปภาพ -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#f4f6f8;color:#17202a;font-family:'Kanit',sans-serif}
@@ -17,14 +21,30 @@ body{margin:0;background:#f4f6f8;color:#17202a;font-family:'Kanit',sans-serif}
 .header p{margin:0;color:#6b7280;font-size:14px}
 .card{background:#fff;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 6px 24px rgba(0,0,0,.07)}
 .card h2{font-size:18px;margin:0 0 12px}
+
+/* ระบบสลับโหมด */
+.mode-tabs{display:flex;gap:10px;margin-bottom:15px;background:#e9eef5;padding:5px;border-radius:12px}
+.mode-btn{flex:1;background:transparent;color:#687386;border:none;padding:10px;border-radius:8px;font-weight:500;font-size:15px;transition:all 0.2s}
+.mode-btn.active{background:#fff;color:#1677ff;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+
+/* โหมดกล้อง */
 .camera-wrap{position:relative;background:#111;border-radius:15px;overflow:hidden;aspect-ratio:16/10}
 video{width:100%;height:100%;object-fit:cover;display:block}
 .guide{position:absolute;left:8%;right:8%;top:42.67%;height:14.66%;border:3px solid #38bdf8;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.43);pointer-events:none}
 .guide:after{content:'จัดตัวเลขให้อยู่ในกรอบนี้';position:absolute;left:50%;top:-34px;transform:translateX(-50%);white-space:nowrap;background:#38bdf8;color:#062033;padding:3px 12px;border-radius:20px;font-size:13px}
-.row{display:flex;gap:10px;flex-wrap:wrap}
+
+/* โหมดอัปโหลด */
+.upload-container{display:none;background:#f7f9fb;border:2px dashed #d7dee8;border-radius:15px;padding:20px;text-align:center}
+.crop-wrapper{display:none;margin-top:15px;max-height:400px;border-radius:10px;overflow:hidden;background:#111}
+#imageToCrop{display:block;max-width:100%}
+input[type="file"]{display:none}
+.custom-file-upload{display:inline-block;background:#1677ff;color:#fff;padding:12px 20px;border-radius:11px;cursor:pointer;font-weight:500;font-size:15px}
+.custom-file-upload:hover{background:#0e65e5}
+
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
 button,select,input{font-family:inherit;border-radius:11px;padding:12px 15px;font-size:15px}
 .capture-large{font-size:19px!important;padding:17px 30px!important;min-width:190px;box-shadow:0 5px 14px rgba(15,157,115,.25)}
-.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px}
 .upload-box{background:#f7f9fb;border:1px solid #e1e7ef;border-radius:13px;padding:12px}
 .upload-title{font-size:14px;font-weight:500;margin-bottom:8px}
 .manual-input{width:100%;border:1px solid #d7dee8;border-radius:10px;padding:12px;font:inherit;font-size:18px;letter-spacing:2px;margin-bottom:8px;background:#fff}
@@ -37,7 +57,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .copy-btn{background:#fff;color:#17202a;padding:7px 12px;font-size:13px;border-radius:8px;font-weight:500;border:1px solid #d7dee8}
 .copy-btn:hover{background:#eef2f7}
 select{background:#eef2f7;min-width:220px;color:#17202a;border:none}
-.status{font-size:13px;color:#687386;margin-top:10px;min-height:20px}
+.status{font-size:13px;color:#687386;margin-top:15px;min-height:20px;background:#fffbe6;padding:10px;border-radius:8px;border:1px solid #ffe58f}
 .values{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .value{background:#f7f9fb;border-radius:13px;padding:14px}
 .label{font-size:13px;color:#707b8c}.num{font-size:29px;font-weight:600;margin-top:2px;word-break:break-all}
@@ -45,7 +65,6 @@ select{background:#eef2f7;min-width:220px;color:#17202a;border:none}
 .result .big{font-size:40px;font-weight:600;line-height:1.1}
 .result small{color:#b8c1ce}
 .formula{margin-top:9px;color:#d5dbe3;font-size:14px}
-.note{font-size:12px;color:#7a8494;line-height:1.6}
 @media(max-width:520px){.values{grid-template-columns:1fr}.header h1{font-size:23px}.guide{left:8%;right:8%}}
 </style>
 </head>
@@ -53,33 +72,59 @@ select{background:#eef2f7;min-width:220px;color:#17202a;border:none}
 <div class="app">
   <div class="header">
     <h1>อ่านค่าตัวเลขจากหน้าจอ</h1>
-    <p>ถ่ายแต่ละครั้ง = ชุดข้อมูลตัวเลข 9 ตำแหน่ง (รวมจุดทศนิยม) → AI อ่านค่า → บันทึกอัตโนมัติ</p>
+    <p>ถ่ายแต่ละครั้ง = ชุดข้อมูลตัวเลข 9 ตำแหน่ง (รวมจุดทศนิยม)</p>
   </div>
 
   <div class="card">
-    <h2>1. กล้องถ่ายตัวเลข (เน้นให้อยู่ในกรอบ)</h2>
-    <div class="camera-wrap">
-      <video id="video" autoplay playsinline muted></video>
-      <div class="guide"></div>
+    <div class="mode-tabs">
+      <button class="mode-btn active" id="modeCameraBtn">📸 ใช้กล้อง</button>
+      <button class="mode-btn" id="modeUploadBtn">🖼️ อัปโหลดรูปภาพ</button>
     </div>
-    <div class="row" style="margin-top:12px">
-      <button id="startBtn">เปิดกล้อง</button>
-      <button id="captureBtn" class="success capture-large" disabled>📷 ถ่ายรูป</button>
-      <button id="switchBtn" class="secondary" disabled>สลับกล้อง</button>
+
+    <!-- โหมดกล้องถ่ายรูป -->
+    <div id="cameraSection">
+      <div class="camera-wrap">
+        <video id="video" autoplay playsinline muted></video>
+        <div class="guide"></div>
+      </div>
+      <div class="row">
+        <button id="startBtn">เปิดกล้อง</button>
+        <button id="captureBtn" class="success capture-large" disabled>📷 ถ่ายรูป</button>
+        <button id="switchBtn" class="secondary" disabled>สลับกล้อง</button>
+      </div>
     </div>
+
+    <!-- โหมดอัปโหลดรูปภาพ -->
+    <div id="uploadSection" class="upload-container">
+      <label class="custom-file-upload">
+        <input type="file" id="fileInput" accept="image/*">
+        เลือกรูปภาพจากเครื่อง
+      </label>
+      <p style="font-size: 13px; color: #687386; margin-top: 8px;">เมื่อเลือกแล้ว ลากกรอบคลุมเฉพาะตัวเลขที่ต้องการ</p>
+      
+      <div class="crop-wrapper" id="cropWrapper">
+        <img id="imageToCrop" src="" alt="Picture to crop">
+      </div>
+      
+      <div class="row" style="justify-content: center; display: none;" id="cropActionRow">
+        <button id="readCropBtn" class="success capture-large">🔍 อ่านค่าในกรอบที่เลือก</button>
+      </div>
+    </div>
+
     <div class="upload-grid">
       <div class="upload-box">
         <div class="upload-title">ทางเลือก: กรอกชุดที่ 1 — ค่ามาก</div>
-        <input id="highManual" class="manual-input" type="text" inputmode="decimal" placeholder="กรอกตัวเลขเช่น 29148378.0">
+        <input id="highManual" class="manual-input" type="text" inputmode="decimal" placeholder="เช่น 29148378.0">
         <button id="highManualBtn" class="secondary upload-btn" type="button">บันทึกชุดที่ 1</button>
       </div>
       <div class="upload-box">
         <div class="upload-title">ทางเลือก: กรอกชุดที่ 2 — ค่าน้อย</div>
-        <input id="lowManual" class="manual-input" type="text" inputmode="decimal" placeholder="กรอกตัวเลขเช่น 29131626.0">
+        <input id="lowManual" class="manual-input" type="text" inputmode="decimal" placeholder="เช่น 29131626.0">
         <button id="lowManualBtn" class="secondary upload-btn" type="button">บันทึกชุดที่ 2</button>
       </div>
     </div>
-    <div id="status" class="status">กด “เปิดกล้อง” เพื่อเริ่มใช้งาน</div>
+    
+    <div id="status" class="status">กด “เปิดกล้อง” หรือ “อัปโหลดรูปภาพ” เพื่อเริ่มใช้งาน</div>
     <canvas id="canvas" style="display:none"></canvas>
   </div>
 
@@ -103,8 +148,8 @@ select{background:#eef2f7;min-width:220px;color:#17202a;border:none}
         <div class="num" id="low">—</div>
       </div>
     </div>
-    <div class="row" style="margin-top:12px">
-      <button id="resetBtn" class="secondary">เริ่มใหม่</button>
+    <div class="row">
+      <button id="resetBtn" class="secondary">เริ่มใหม่ทั้งหมด</button>
     </div>
   </div>
 
@@ -132,6 +177,7 @@ select{background:#eef2f7;min-width:220px;color:#17202a;border:none}
 </div>
 
 <script>
+// Elements
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const startBtn = document.getElementById('startBtn');
@@ -151,15 +197,110 @@ const lowManual = document.getElementById('lowManual');
 const highManualBtn = document.getElementById('highManualBtn');
 const lowManualBtn = document.getElementById('lowManualBtn');
 
+// Mode Switch Elements
+const modeCameraBtn = document.getElementById('modeCameraBtn');
+const modeUploadBtn = document.getElementById('modeUploadBtn');
+const cameraSection = document.getElementById('cameraSection');
+const uploadSection = document.getElementById('uploadSection');
+const fileInput = document.getElementById('fileInput');
+const imageToCrop = document.getElementById('imageToCrop');
+const cropWrapper = document.getElementById('cropWrapper');
+const cropActionRow = document.getElementById('cropActionRow');
+const readCropBtn = document.getElementById('readCropBtn');
+
 let stream = null;
 let facing = 'environment';
 let shot = 0;
 let high = null;
 let low = null;
 let worker = null;
+let cropper = null;
 
 function setStatus(t){ statusEl.textContent=t; }
 
+// --- การสลับโหมด กล้อง / อัปโหลด ---
+modeCameraBtn.addEventListener('click', () => {
+  modeCameraBtn.classList.add('active');
+  modeUploadBtn.classList.remove('active');
+  cameraSection.style.display = 'block';
+  uploadSection.style.display = 'none';
+  setStatus('กด “เปิดกล้อง” เพื่อใช้งานผ่านกล้อง');
+});
+
+modeUploadBtn.addEventListener('click', () => {
+  modeUploadBtn.classList.add('active');
+  modeCameraBtn.classList.remove('active');
+  cameraSection.style.display = 'none';
+  uploadSection.style.display = 'block';
+  if(stream) {
+    stream.getTracks().forEach(t=>t.stop());
+    captureBtn.disabled = true;
+    switchBtn.disabled = true;
+  }
+  setStatus('เลือกรูปภาพจากเครื่องเพื่อเริ่มต้น');
+});
+
+// --- ระบบ Cropper (อัปโหลดรูปภาพ) ---
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+
+  const url = URL.createObjectURL(file);
+  imageToCrop.src = url;
+  cropWrapper.style.display = 'block';
+  cropActionRow.style.display = 'flex';
+  
+  if(cropper) cropper.destroy(); // ล้างอันเก่าทิ้งถ้ามี
+  
+  // เริ่มการทำงานของ Cropper.js
+  cropper = new Cropper(imageToCrop, {
+    viewMode: 1,
+    dragMode: 'crop',
+    autoCropArea: 0.5,
+    restore: false,
+    guides: true,
+    center: true,
+    highlight: false,
+    cropBoxMovable: true,
+    cropBoxResizable: true,
+    toggleDragModeOnDblclick: false,
+  });
+  
+  setStatus('ลากปรับขนาดกรอบให้คลุมเฉพาะ "ตัวเลข" ที่ต้องการ แล้วกด "อ่านค่าในกรอบที่เลือก"');
+});
+
+readCropBtn.addEventListener('click', async () => {
+  if(!cropper) return;
+  if(high!==null && low!==null){
+    setStatus('มีข้อมูลครบ 2 ชุดแล้ว — กด “เริ่มใหม่” เพื่อเริ่มใหม่');
+    return;
+  }
+
+  try {
+    readCropBtn.disabled = true;
+    readCropBtn.textContent = 'กำลังประมวลผล...';
+    
+    // ดึงรูปเฉพาะส่วนที่ถูกครอบ (Crop) ออกมาเป็น Canvas
+    const croppedCanvas = cropper.getCroppedCanvas();
+    setStatus(`AI OCR กำลังอ่านข้อมูลจากรูปภาพเฉพาะส่วนที่เลือก...`);
+    
+    // ส่งเข้าฟังก์ชันอ่านค่า (ตัวเดียวกับที่กล้องใช้)
+    const value = await recognizeCanvas(croppedCanvas);
+
+    if(value === null){
+      setStatus('AI OCR อ่านไม่สำเร็จ (ลองจัดกรอบให้พอดีตัวเลขมากขึ้น) — ลองใหม่อีกครั้ง');
+    } else {
+      processReadValue(value);
+    }
+  } catch (e) {
+    setStatus('เกิดข้อผิดพลาดในการอ่านรูป: ' + e.message);
+  } finally {
+    readCropBtn.disabled = false;
+    readCropBtn.innerHTML = '🔍 อ่านค่าในกรอบที่เลือก';
+  }
+});
+
+// --- ระบบกล้อง (Camera) ---
 async function startCamera(){
   try{
     if(stream) stream.getTracks().forEach(t=>t.stop());
@@ -176,15 +317,58 @@ async function startCamera(){
     await video.play();
     captureBtn.disabled=false;
     switchBtn.disabled=false;
-    setStatus('พร้อมถ่าย — จัดตัวเลขให้อยู่ในกรอบเป๊ะๆ (จอชัดที่สุด) แล้วกด “ถ่ายรูป”');
+    setStatus('พร้อมถ่าย — จัดให้อยู่ในกรอบ (จอชัดที่สุด) แล้วกด “ถ่ายรูป”');
   }catch(e){
     setStatus('ไม่สามารถเปิดกล้องได้: '+e.message);
   }
 }
 
+async function captureAndRead(){
+  if(!video.videoWidth) return;
+  if(high!==null && low!==null){ setStatus('มีข้อมูลครบแล้ว'); return; }
+
+  captureBtn.disabled=true;
+  try{
+    const videoRect = video.getBoundingClientRect();
+    const guideRect = document.querySelector('.guide').getBoundingClientRect();
+    const vw = video.videoWidth, vh = video.videoHeight;
+    const scale = Math.max(videoRect.width / vw, videoRect.height / vh);
+    const renderedWidth = vw * scale;
+    const renderedHeight = vh * scale;
+    const offsetX = (renderedWidth - videoRect.width) / 2;
+    const offsetY = (renderedHeight - videoRect.height) / 2;
+    const guideX = guideRect.left - videoRect.left;
+    const guideY = guideRect.top - videoRect.top;
+    
+    const sx = (guideX + offsetX) / scale;
+    const sy = (guideY + offsetY) / scale;
+    const sw = guideRect.width / scale;
+    const sh = guideRect.height / scale;
+
+    canvas.width = sw; 
+    canvas.height = sh;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
+
+    setStatus(`AI OCR กำลังอ่านภาพจากกล้อง...`);
+    const value = await recognizeCanvas(canvas);
+
+    if(value === null){
+      setStatus('AI OCR อ่านไม่สำเร็จ (กรุณาจัดเป้าหมายให้อยู่กลางกรอบ) — ถ่ายใหม่หรือกรอกแทน');
+    } else {
+      processReadValue(value);
+    }
+  }catch(e){
+    setStatus('เกิดข้อผิดพลาดในการอ่าน: '+e.message);
+  }finally{
+    captureBtn.disabled=false;
+  }
+}
+
+// --- ระบบ AI OCR ---
 async function getWorker(){
   if(worker) return worker;
-  setStatus('กำลังเตรียม AI OCR สำหรับอ่านตัวเลขหน้าจอ...');
+  setStatus('กำลังเตรียม AI OCR...');
   worker = await Tesseract.createWorker('eng');
   await worker.setParameters({
     tessedit_char_whitelist: '0123456789,.',
@@ -203,13 +387,10 @@ function cleanNumber(text){
 }
 
 function preprocessImage(sourceCanvas){
-  const w = sourceCanvas.width;
-  const h = sourceCanvas.height;
   const scale = 3; 
   const out = document.createElement('canvas');
-  out.width = w * scale;
-  out.height = h * scale;
-  
+  out.width = sourceCanvas.width * scale;
+  out.height = sourceCanvas.height * scale;
   const ctx = out.getContext('2d', { willReadFrequently: true });
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
@@ -217,37 +398,29 @@ function preprocessImage(sourceCanvas){
 
   const imgData = ctx.getImageData(0, 0, out.width, out.height);
   const data = imgData.data;
-  
-  const kernelSize = 15;
-  const c = 10;
   const luma = new Uint8ClampedArray(out.width * out.height);
   
   for (let i = 0; i < data.length; i += 4) {
     luma[i / 4] = (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
   }
 
+  const kernelSize = 15, c = 10;
   for (let y = 0; y < out.height; y++) {
     for (let x = 0; x < out.width; x++) {
-      const idx = (y * out.width + x);
-      let sum = 0;
-      let count = 0;
-      
+      let sum = 0, count = 0;
       for (let ky = -Math.floor(kernelSize / 2); ky <= Math.floor(kernelSize / 2); ky++) {
         for (let kx = -Math.floor(kernelSize / 2); kx <= Math.floor(kernelSize / 2); kx++) {
-          const iy = y + ky;
-          const ix = x + kx;
+          const iy = y + ky, ix = x + kx;
           if (iy >= 0 && iy < out.height && ix >= 0 && ix < out.width) {
             sum += luma[iy * out.width + ix];
             count++;
           }
         }
       }
-      const mean = sum / count;
-      const v = luma[idx] < (mean - c) ? 0 : 255;
-      data[idx * 4] = data[idx * 4 + 1] = data[idx * 4 + 2] = v;
+      const v = luma[y * out.width + x] < ((sum / count) - c) ? 0 : 255;
+      data[(y * out.width + x) * 4] = data[(y * out.width + x) * 4 + 1] = data[(y * out.width + x) * 4 + 2] = v;
     }
   }
-
   ctx.putImageData(imgData, 0, 0);
   return out;
 }
@@ -256,122 +429,57 @@ async function recognizeCanvas(sourceCanvas){
   const w = await getWorker();
   const processed = preprocessImage(sourceCanvas);
   
-  // 1. ลองอ่านแบบปกติ
   let result = await w.recognize(processed);
   let value = cleanNumber(result.data.text);
 
   if(value === null){
-    // 2. ถ้าอ่านไม่ได้ ลองสลับสี (Invert) สำหรับบรรทัดที่มีแถบสีทึบ
     const ctx = processed.getContext('2d');
     const imgData = ctx.getImageData(0, 0, processed.width, processed.height);
     const d = imgData.data;
     for (let i = 0; i < d.length; i += 4) {
-      d[i] = 255 - d[i];       // R
-      d[i + 1] = 255 - d[i + 1]; // G
-      d[i + 2] = 255 - d[i + 2]; // B
+      d[i] = 255 - d[i]; d[i + 1] = 255 - d[i + 1]; d[i + 2] = 255 - d[i + 2];
     }
     ctx.putImageData(imgData, 0, 0);
-    
     result = await w.recognize(processed);
     value = cleanNumber(result.data.text);
   }
   
   if(value === null){
-    // 3. Fallback ภาพต้นฉบับ
     result = await w.recognize(sourceCanvas);
     value = cleanNumber(result.data.text);
   }
-  
   return value;
 }
 
-async function captureAndRead(){
-  if(!video.videoWidth) return;
-
-  if(high!==null && low!==null){
-    setStatus('มีข้อมูลครบ 2 ชุดแล้ว — กด “เริ่มใหม่” เพื่อเริ่มใหม่');
-    return;
-  }
-  if(shot===1 && low!==null){
-    setStatus('ชุดข้อมูลที่ 2 ถูกกรอกไว้แล้ว — กด “เริ่มใหม่” หรือใช้ค่าที่กรอก');
-    return;
-  }
-
-  captureBtn.disabled=true;
-  try{
-    // คำนวณพิกัดกรอบเจาะจง 100% ตัดปัญหาการอ่านตัวเลขนอกกรอบ
-    const videoRect = video.getBoundingClientRect();
-    const guideRect = document.querySelector('.guide').getBoundingClientRect();
-
-    const vw = video.videoWidth;
-    const vh = video.videoHeight;
-
-    const scale = Math.max(videoRect.width / vw, videoRect.height / vh);
-    const renderedWidth = vw * scale;
-    const renderedHeight = vh * scale;
-
-    const offsetX = (renderedWidth - videoRect.width) / 2;
-    const offsetY = (renderedHeight - videoRect.height) / 2;
-
-    const guideX = guideRect.left - videoRect.left;
-    const guideY = guideRect.top - videoRect.top;
-
-    const sx = (guideX + offsetX) / scale;
-    const sy = (guideY + offsetY) / scale;
-    const sw = guideRect.width / scale;
-    const sh = guideRect.height / scale;
-
-    canvas.width = sw; 
-    canvas.height = sh;
-
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
-
-    setStatus(`AI OCR กำลังอ่านชุดข้อมูลครั้งที่ ${shot+1} เฉพาะในกรอบ...`);
-    const value = await recognizeCanvas(canvas);
-
-    if(value === null){
-      setStatus('AI OCR อ่านไม่สำเร็จ (กรุณาจัดบรรทัดเป้าหมายให้อยู่กลางกรอบ) — ถ่ายใหม่หรือกรอกแทน');
-      return;
-    }
-
-    shot++;
-
-    if(shot===1){
-      high=value;
-      highEl.textContent=value.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
-      updateCalculateButton();
-      setStatus(`บันทึกชุดที่ 1 = ${highEl.textContent} แล้ว — ถ่ายครั้งที่ 2 เป็นชุดข้อมูลค่าน้อย`);
-    }else{
-      low=value;
-      lowEl.textContent=value.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
-      updateCalculateButton();
-      setStatus(`บันทึกชุดที่ 2 = ${lowEl.textContent} แล้ว — กด “คำนวณ”`);
-    }
-  }catch(e){
-    setStatus('เกิดข้อผิดพลาดในการอ่าน: '+e.message);
-  }finally{
-    captureBtn.disabled=false;
+// --- ฟังก์ชันบันทึกค่าที่ได้จากการอ่าน ---
+function processReadValue(value){
+  shot++;
+  if(shot === 1){
+    high = value;
+    highEl.textContent = value.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+    updateCalculateButton();
+    setStatus(`บันทึกชุดที่ 1 = ${highEl.textContent} แล้ว — เตรียมอ่านครั้งที่ 2 (ค่าน้อย)`);
+  }else{
+    low = value;
+    lowEl.textContent = value.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+    updateCalculateButton();
+    setStatus(`บันทึกชุดที่ 2 = ${lowEl.textContent} แล้ว — กด “คำนวณ”`);
   }
 }
 
+// --- ฟังก์ชันคำนวณและปุ่มต่างๆ ---
 function updateCalculateButton(){
   calculateBtn.disabled = !(high!==null && low!==null);
 }
 
 function calculate(){
-  if(high===null || low===null){
-    setStatus('กรุณาอ่านค่าให้ครบ 2 ภาพก่อน แล้วจึงกด “คำนวณ”');
-    return;
-  }
-
-  const base=Number(baseEl.value);
-  const diff=high-low;
-  const pct=(diff/base)*100;
-
-  diffEl.textContent=diff.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
-  percentEl.textContent=pct.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
-  formulaEl.textContent=`ชุดที่ 1 (${high.toFixed(1)}) − ชุดที่ 2 (${low.toFixed(1)}) = ${diff.toFixed(1)} → ${diff.toLocaleString('en-US')} ÷ ${base.toLocaleString('en-US')} × 100`;
+  if(high===null || low===null) return;
+  const base = Number(baseEl.value);
+  const diff = high - low;
+  const pct = (diff / base) * 100;
+  diffEl.textContent = diff.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+  percentEl.textContent = pct.toLocaleString('en-US',{minimumFractionDigits: 2, maximumFractionDigits: 2}) + '%';
+  formulaEl.textContent = `(${high.toFixed(1)} − ${low.toFixed(1)}) = ${diff.toFixed(1)} → ${diff.toLocaleString('en-US')} ÷ ${base.toLocaleString('en-US')} × 100`;
   setStatus('คำนวณเรียบร้อยแล้ว');
 }
 
@@ -381,8 +489,15 @@ function resetAll(){
   diffEl.textContent='—'; percentEl.textContent='—';
   formulaEl.textContent='ยังไม่มีข้อมูล';
   highManual.value=''; lowManual.value='';
+  
+  // ล้างการอัปโหลด
+  fileInput.value = '';
+  cropWrapper.style.display = 'none';
+  cropActionRow.style.display = 'none';
+  if(cropper){ cropper.destroy(); cropper = null; }
+
   updateCalculateButton();
-  setStatus(stream ? 'พร้อมถ่าย — จัดให้อยู่ในกรอบ หรือกรอกตัวเลขแทน' : 'กด “เปิดกล้อง” เพื่อเริ่มใช้งาน');
+  setStatus('รีเซ็ตข้อมูลแล้ว — เลือกเปิดกล้อง หรืออัปโหลดรูปภาพเพื่อเริ่มใหม่');
 }
 
 startBtn.addEventListener('click',startCamera);
@@ -399,15 +514,11 @@ document.querySelectorAll('.copy-btn').forEach(btn=>{
     if(text==='—') return;
     try{
       await navigator.clipboard.writeText(text);
-      const old=btn.textContent;
-      btn.textContent='Copied!';
-      setTimeout(()=>btn.textContent=old,1200);
+      const old=btn.textContent; btn.textContent='Copied!'; setTimeout(()=>btn.textContent=old,1200);
     }catch(e){
       const ta=document.createElement('textarea');
-      ta.value=text; document.body.appendChild(ta); ta.select();
-      document.execCommand('copy'); ta.remove();
-      btn.textContent='Copied!';
-      setTimeout(()=>btn.textContent='Copy',1200);
+      ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+      btn.textContent='Copied!'; setTimeout(()=>btn.textContent='Copy',1200);
     }
   });
 });
@@ -415,48 +526,28 @@ document.querySelectorAll('.copy-btn').forEach(btn=>{
 function saveManualValue(type){
   const input = type==='high' ? highManual : lowManual;
   const value = cleanNumber(input.value);
-
-  if(value===null){
-    setStatus('กรุณากรอกตัวเลขให้ครบ 9 หลักพอดี (ไม่นับจุดทศนิยม)');
-    input.focus();
-    return;
-  }
+  if(value===null){ setStatus('กรุณากรอกตัวเลขให้ครบ 9 หลักพอดี'); input.focus(); return; }
 
   if(type==='high'){
-    if(high!==null){
-      setStatus('มีชุดข้อมูลที่ 1 แล้ว — กด “เริ่มใหม่” ก่อน');
-      return;
-    }
-    high=value;
-    highEl.textContent=value.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
-    shot=Math.max(shot,1);
-    setStatus(`บันทึกชุดข้อมูลที่ 1 = ${highEl.textContent} จากการกรอกตัวเลขแล้ว`);
+    if(high!==null){ setStatus('มีชุดที่ 1 แล้ว'); return; }
+    high = value;
+    highEl.textContent = value.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+    shot = Math.max(shot,1);
+    setStatus(`บันทึกชุดที่ 1 (กรอกเอง) = ${highEl.textContent}`);
   }else{
-    if(low!==null){
-      setStatus('มีชุดข้อมูลที่ 2 แล้ว — กด “เริ่มใหม่” ก่อน');
-      return;
-    }
-    low=value;
-    lowEl.textContent=value.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
-    shot=Math.max(shot,2);
-    setStatus(`บันทึกชุดข้อมูลที่ 2 = ${lowEl.textContent} จากการกรอกตัวเลขแล้ว`);
+    if(low!==null){ setStatus('มีชุดที่ 2 แล้ว'); return; }
+    low = value;
+    lowEl.textContent = value.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+    shot = Math.max(shot,2);
+    setStatus(`บันทึกชุดที่ 2 (กรอกเอง) = ${lowEl.textContent}`);
   }
-
   updateCalculateButton();
-  if(high!==null && low!==null){
-    setStatus(`ครบ 2 ชุดแล้ว — กด “คำนวณ”`);
-  }
 }
 
 highManualBtn.addEventListener('click',()=>saveManualValue('high'));
 lowManualBtn.addEventListener('click',()=>saveManualValue('low'));
-
-highManual.addEventListener('input',()=>{
-  highManual.value=highManual.value.replace(/[^\d.]/g,'');
-});
-lowManual.addEventListener('input',()=>{
-  lowManual.value=lowManual.value.replace(/[^\d.]/g,'');
-});
+highManual.addEventListener('input',()=>{ highManual.value=highManual.value.replace(/[^\d.]/g,''); });
+lowManual.addEventListener('input',()=>{ lowManual.value=lowManual.value.replace(/[^\d.]/g,''); });
 
 window.addEventListener('beforeunload',()=>{
   if(stream) stream.getTracks().forEach(t=>t.stop());
