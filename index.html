@@ -14,7 +14,7 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#f4f6f8;color:#17202a;font-family:'Kanit',sans-serif}
-.app{max-width:560px;margin:auto;padding:22px 16px 40px}
+.app{max-width:760px;margin:auto;padding:22px 16px 40px}
 .header{text-align:center;margin-bottom:18px}
 .header h1{font-size:27px;margin:0 0 4px;font-weight:600}
 .header p{margin:0;color:#6b7280;font-size:14px}
@@ -29,6 +29,10 @@ body{margin:0;background:#f4f6f8;color:#17202a;font-family:'Kanit',sans-serif}
 video{width:100%;height:100%;object-fit:cover;display:block}
 .guide{position:absolute;left:8%;right:8%;top:42.67%;height:14.66%;border:3px solid #38bdf8;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.43);pointer-events:none}
 .guide:after{content:'จัดตัวเลขให้อยู่ในกรอบนี้';position:absolute;left:50%;top:-34px;transform:translateX(-50%);white-space:nowrap;background:#38bdf8;color:#062033;padding:3px 12px;border-radius:20px;font-size:13px}
+
+.zoom-container{display:none;background:#f7f9fb;border:1px solid #e1e7ef;border-radius:13px;padding:12px;margin-top:12px}
+.zoom-container label{font-size:14px;font-weight:500;display:block;margin-bottom:5px;color:#334155}
+.zoom-slider{width:100%;accent-color:#1677ff;cursor:pointer}
 
 .upload-container{display:none;background:#f7f9fb;border:2px dashed #d7dee8;border-radius:15px;padding:20px;text-align:center}
 .crop-wrapper{display:none;margin-top:15px;max-height:400px;border-radius:10px;overflow:hidden;background:#111}
@@ -68,7 +72,7 @@ select{background:#eef2f7;width:100%;color:#17202a;border:none}
 <div class="app">
   <div class="header">
     <h1>ระบบรายงานผลผลิตโรงงาน</h1>
-    <p>อ่านค่าตัวเลขและจัดรูปแบบรายงานอัตโนมัติ</p>
+    <p>อ่านค่าตัวเลขยืดหยุ่น & ซูมกล้องได้</p>
   </div>
 
   <div class="card">
@@ -83,6 +87,13 @@ select{background:#eef2f7;width:100%;color:#17202a;border:none}
         <video id="video" autoplay playsinline muted></video>
         <div class="guide"></div>
       </div>
+      
+      <!-- แถบซูมกล้อง -->
+      <div id="zoomContainer" class="zoom-container">
+        <label for="zoomRange" id="zoomLabel">ซูมกล้อง: 1.0x</label>
+        <input type="range" id="zoomRange" class="zoom-slider" min="1" max="1" step="0.1" value="1">
+      </div>
+
       <div class="row">
         <button id="startBtn">เปิดกล้อง</button>
         <button id="captureBtn" class="success capture-large" disabled>📷 ถ่ายรูป</button>
@@ -206,7 +217,12 @@ const cropWrapper = document.getElementById('cropWrapper');
 const cropActionRow = document.getElementById('cropActionRow');
 const readCropBtn = document.getElementById('readCropBtn');
 
+const zoomContainer = document.getElementById('zoomContainer');
+const zoomRange = document.getElementById('zoomRange');
+const zoomLabel = document.getElementById('zoomLabel');
+
 let stream = null;
+let videoTrack = null;
 let facing = 'environment';
 let shot = 0;
 let high = null;
@@ -233,6 +249,7 @@ modeUploadBtn.addEventListener('click', () => {
     stream.getTracks().forEach(t=>t.stop());
     captureBtn.disabled = true;
     switchBtn.disabled = true;
+    zoomContainer.style.display = 'none';
   }
   setStatus('เลือกรูปภาพจากเครื่องเพื่อเริ่มต้น');
 });
@@ -305,15 +322,47 @@ async function startCamera(){
       },
       audio: false
     });
-    video.srcObject=stream;
+    video.srcObject = stream;
     await video.play();
-    captureBtn.disabled=false;
-    switchBtn.disabled=false;
+    
+    captureBtn.disabled = false;
+    switchBtn.disabled = false;
+
+    // ตั้งค่าระบบซูมกล้อง
+    videoTrack = stream.getVideoTracks()[0];
+    const capabilities = videoTrack.getCapabilities();
+    const settings = videoTrack.getSettings();
+
+    if ('zoom' in capabilities) {
+      zoomContainer.style.display = 'block';
+      zoomRange.min = capabilities.zoom.min;
+      zoomRange.max = capabilities.zoom.max;
+      zoomRange.step = capabilities.zoom.step || 0.1;
+      zoomRange.value = settings.zoom || capabilities.zoom.min;
+      zoomLabel.textContent = `ซูมกล้อง: ${zoomRange.value}x`;
+    } else {
+      zoomContainer.style.display = 'none';
+    }
+
     setStatus('พร้อมถ่าย — จัดให้อยู่ในกรอบ แล้วกด “ถ่ายรูป”');
   }catch(e){
     setStatus('ไม่สามารถเปิดกล้องได้: '+e.message);
   }
 }
+
+// ควบคุมการซูมเมื่อเลื่อน Range Slider
+zoomRange.addEventListener('input', async (e) => {
+  if (!videoTrack) return;
+  const val = parseFloat(e.target.value);
+  zoomLabel.textContent = `ซูมกล้อง: ${val.toFixed(1)}x`;
+  try {
+    await videoTrack.applyConstraints({
+      advanced: [{ zoom: val }]
+    });
+  } catch (err) {
+    console.error("ไม่สามารถซูมได้:", err);
+  }
+});
 
 async function captureAndRead(){
   if(!video.videoWidth) return;
@@ -466,7 +515,6 @@ function calculate(){
   const diff = high - low;
   const pct = (diff / base) * 100;
   
-  // ดึงวันที่ปัจจุบันในรูปแบบ DD/MM/YYYY (ปี พ.ศ.)
   const now = new Date();
   const day = String(now.getDate()).padStart(2, '0');
   const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -486,8 +534,7 @@ function calculate(){
 - Break down time = 0hr.`;
 
   reportOutput.textContent = reportText;
-  formulaStr = `(${high} − ${low}) = ${diff} → Utilization: (${diff} ÷ ${base}) × 100 = ${utilizationStr}%`;
-  formulaEl.textContent = formulaStr;
+  formulaEl.textContent = `(${high} − ${low}) = ${diff} → Utilization: (${diff} ÷ ${base}) × 100 = ${utilizationStr}%`;
   setStatus('สร้างรายงานเรียบร้อยแล้ว');
 }
 
