@@ -71,15 +71,15 @@ select{background:#eef2f7;min-width:220px;color:#17202a}
     </div>
     <div class="upload-grid">
       <div class="upload-box">
-        <div class="upload-title">ค่ามาก — สูงสุด 1 ภาพ</div>
+        <div class="upload-title">ภาพที่ 1 — ค่ามาก (สูงสุด 1 ภาพ)</div>
         <input id="highFile" type="file" accept="image/*" capture="environment">
-        <button id="highUploadBtn" class="secondary upload-btn" type="button">📁 เพิ่มรูปค่ามาก</button>
+        <button id="highUploadBtn" class="secondary upload-btn" type="button">📁 อัปโหลดภาพที่ 1 (ค่ามาก)</button>
         <div id="highFileName" class="file-name">ยังไม่ได้เพิ่มรูป</div>
       </div>
       <div class="upload-box">
-        <div class="upload-title">ค่าน้อย — สูงสุด 1 ภาพ</div>
+        <div class="upload-title">ภาพที่ 2 — ค่าน้อย (สูงสุด 1 ภาพ)</div>
         <input id="lowFile" type="file" accept="image/*" capture="environment">
-        <button id="lowUploadBtn" class="secondary upload-btn" type="button">📁 เพิ่มรูปค่าน้อย</button>
+        <button id="lowUploadBtn" class="secondary upload-btn" type="button">📁 อัปโหลดภาพที่ 2 (ค่าน้อย)</button>
         <div id="lowFileName" class="file-name">ยังไม่ได้เพิ่มรูป</div>
       </div>
     </div>
@@ -114,6 +114,9 @@ select{background:#eef2f7;min-width:220px;color:#17202a}
 
   <div class="card">
     <h2>4. ผลลัพธ์</h2>
+    <div class="row" style="margin-bottom:12px">
+      <button id="calculateBtn" class="success" disabled>🧮 คำนวณ</button>
+    </div>
     <div class="result">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
         <small>ผลการผลิต (kW)</small>
@@ -152,6 +155,7 @@ const percentEl = document.getElementById('percent');
 const formulaEl = document.getElementById('formula');
 const baseEl = document.getElementById('base');
 const resetBtn = document.getElementById('resetBtn');
+const calculateBtn = document.getElementById('calculateBtn');
 const highFile = document.getElementById('highFile');
 const lowFile = document.getElementById('lowFile');
 const highUploadBtn = document.getElementById('highUploadBtn');
@@ -165,6 +169,8 @@ let shot = 0;
 let high = null;
 let low = null;
 let worker = null;
+
+// ต้องอ่านครบทั้งค่ามากและค่าน้อยก่อน จึงจะกดคำนวณได้
 
 function setStatus(t){ statusEl.textContent=t; }
 
@@ -240,6 +246,19 @@ async function recognizeCanvas(sourceCanvas){
 
 async function readUploadedImage(file, type){
   if(!file) return;
+
+  // อัปโหลดตามลำดับ: ภาพที่ 1 = ค่ามาก, ภาพที่ 2 = ค่าน้อย
+  if(type==='high' && high!==null){
+    setStatus('มีค่ามากอยู่แล้ว — กด “เริ่มใหม่” ก่อนเพิ่มภาพชุดใหม่');
+    highFile.value='';
+    return;
+  }
+  if(type==='low' && low!==null){
+    setStatus('มีค่าน้อยอยู่แล้ว — กด “เริ่มใหม่” ก่อนเพิ่มภาพชุดใหม่');
+    lowFile.value='';
+    return;
+  }
+
   try{
     setStatus(`กำลังวิเคราะห์รูป${type==='high'?'ค่ามาก':'ค่าน้อย'}...`);
     const bitmap=await createImageBitmap(file);
@@ -278,14 +297,14 @@ async function readUploadedImage(file, type){
       lowFileName.textContent=file.name;
     }
 
-    // If values are reversed, normalize them.
-    if(high!==null && low!==null && high<low){
-      [high,low]=[low,high];
-      highEl.textContent=high.toLocaleString('en-US');
-      lowEl.textContent=low.toLocaleString('en-US');
+    updateCalculateButton();
+    if(high!==null && low!==null){
+      setStatus('อ่านครบ 2 ค่าแล้ว — กด “คำนวณ” เพื่อเริ่มคำนวณ');
+    }else if(high!==null){
+      setStatus('บันทึกค่ามากแล้ว — กรุณาเพิ่มภาพค่าน้อยเป็นภาพที่ 2');
+    }else{
+      setStatus('บันทึกค่าน้อยแล้ว — กรุณาเพิ่มภาพค่ามากเป็นภาพที่ 1');
     }
-    calculate();
-    setStatus('อ่านค่าจากรูปเรียบร้อย');
   }catch(e){
     setStatus('ไม่สามารถอ่านรูปได้: '+e.message);
   }
@@ -311,23 +330,24 @@ async function captureAndRead(){
       return;
     }
 
+    if(shot >= 2){
+      setStatus('ถ่ายครบ 2 ครั้งแล้ว — กด “เริ่มใหม่” หากต้องการถ่ายชุดใหม่');
+      return;
+    }
+
     shot++;
     if(shot===1){
       high=value;
       highEl.textContent=value.toLocaleString('en-US');
-      setStatus('บันทึกค่ามากแล้ว — หากต้องการใช้กล้องต่อ ให้ถ่ายครั้งที่ 2 เป็นค่าน้อย หรือเพิ่มรูปในช่องค่าน้อย');
+      highFileName.textContent='ภาพจากกล้อง — ครั้งที่ 1 (ค่ามาก)';
+      updateCalculateButton();
+      setStatus('ครั้งที่ 1 ถูกบันทึกเป็น “ค่ามาก” แล้ว — กดถ่ายอีกครั้งเพื่อบันทึก “ค่าน้อย”');
     }else{
       low=value;
       lowEl.textContent=value.toLocaleString('en-US');
-      if(high !== null && high < low){
-        [high,low]=[low,high];
-        highEl.textContent=high.toLocaleString('en-US');
-        lowEl.textContent=low.toLocaleString('en-US');
-        setStatus('ตรวจพบค่ากลับด้าน ระบบสลับเป็นค่ามาก/ค่าน้อยให้อัตโนมัติ');
-      }else{
-        setStatus('อ่านครบ 2 ค่าแล้ว');
-      }
-      calculate();
+      lowFileName.textContent='ภาพจากกล้อง — ครั้งที่ 2 (ค่าน้อย)';
+      updateCalculateButton();
+      setStatus('ครั้งที่ 2 ถูกบันทึกเป็น “ค่าน้อย” แล้ว — กด “คำนวณ” เพื่อเริ่มคำนวณ');
     }
   }catch(e){
     setStatus('เกิดข้อผิดพลาดในการอ่าน: '+e.message);
@@ -336,14 +356,24 @@ async function captureAndRead(){
   }
 }
 
+function updateCalculateButton(){
+  calculateBtn.disabled = !(high!==null && low!==null);
+}
+
 function calculate(){
-  if(high===null || low===null) return;
+  if(high===null || low===null){
+    setStatus('กรุณาอ่านค่าให้ครบ 2 ภาพก่อน แล้วจึงกด “คำนวณ”');
+    return;
+  }
+
   const base=Number(baseEl.value);
   const diff=high-low;
   const pct=(diff/base)*100;
+
   diffEl.textContent=diff.toLocaleString('en-US');
   percentEl.textContent=pct.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
   formulaEl.textContent=`(${high.toLocaleString('en-US')} − ${low.toLocaleString('en-US')}) ÷ ${base.toLocaleString('en-US')} × 100`;
+  setStatus('คำนวณเรียบร้อยแล้ว');
 }
 
 function resetAll(){
@@ -354,14 +384,16 @@ function resetAll(){
   highFile.value=''; lowFile.value='';
   highFileName.textContent='ยังไม่ได้เพิ่มรูป';
   lowFileName.textContent='ยังไม่ได้เพิ่มรูป';
+  updateCalculateButton();
   setStatus(stream ? 'พร้อมถ่าย — ครั้งที่ 1 เป็นค่ามาก' : 'กด “เปิดกล้อง” เพื่อเริ่มใช้งาน');
 }
 
 startBtn.addEventListener('click',startCamera);
 switchBtn.addEventListener('click',()=>{facing=facing==='environment'?'user':'environment';startCamera();});
 captureBtn.addEventListener('click',captureAndRead);
-baseEl.addEventListener('change',calculate);
+baseEl.addEventListener('change',()=>{ if(high!==null && low!==null) setStatus('เปลี่ยนค่าฐานแล้ว — กด “คำนวณ” เพื่อคำนวณใหม่'); });
 resetBtn.addEventListener('click',resetAll);
+calculateBtn.addEventListener('click',calculate);
 
 document.querySelectorAll('.copy-btn').forEach(btn=>{
   btn.addEventListener('click',async()=>{
