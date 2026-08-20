@@ -55,11 +55,11 @@ select{background:#eef2f7;min-width:220px;color:#17202a}
 <div class="app">
   <div class="header">
     <h1>อ่านค่าตัวเลขจากกล้อง</h1>
-    <p>ถ่าย 2 ครั้ง → ค่ามาก − ค่าน้อย → หารค่าฐาน → × 100</p>
+    <p>ถ่ายแต่ละครั้ง = ชุดข้อมูลตัวเลข 9 ตำแหน่ง → ครั้งที่ 1 ลบ ครั้งที่ 2</p>
   </div>
 
   <div class="card">
-    <h2>1. กล้องถ่ายตัวเลข</h2>
+    <h2>1. กล้องถ่ายตัวเลข 9 ตำแหน่ง</h2>
     <div class="camera-wrap">
       <video id="video" autoplay playsinline muted></video>
       <div class="guide"></div>
@@ -71,13 +71,13 @@ select{background:#eef2f7;min-width:220px;color:#17202a}
     </div>
     <div class="upload-grid">
       <div class="upload-box">
-        <div class="upload-title">ภาพที่ 1 — ค่ามาก (สูงสุด 1 ภาพ)</div>
+        <div class="upload-title">ชุดข้อมูลที่ 1 — ค่ามาก (9 ตำแหน่ง)</div>
         <input id="highFile" type="file" accept="image/*" capture="environment">
         <button id="highUploadBtn" class="secondary upload-btn" type="button">📁 อัปโหลดภาพที่ 1 (ค่ามาก)</button>
         <div id="highFileName" class="file-name">ยังไม่ได้เพิ่มรูป</div>
       </div>
       <div class="upload-box">
-        <div class="upload-title">ภาพที่ 2 — ค่าน้อย (สูงสุด 1 ภาพ)</div>
+        <div class="upload-title">ชุดข้อมูลที่ 2 — ค่าน้อย (9 ตำแหน่ง)</div>
         <input id="lowFile" type="file" accept="image/*" capture="environment">
         <button id="lowUploadBtn" class="secondary upload-btn" type="button">📁 อัปโหลดภาพที่ 2 (ค่าน้อย)</button>
         <div id="lowFileName" class="file-name">ยังไม่ได้เพิ่มรูป</div>
@@ -99,11 +99,11 @@ select{background:#eef2f7;min-width:220px;color:#17202a}
     <h2>3. ค่าที่อ่านได้</h2>
     <div class="values">
       <div class="value">
-        <div class="label">ครั้งที่ 1 — ค่ามาก</div>
+        <div class="label">ชุดข้อมูลครั้งที่ 1 — ค่ามาก (9 ตำแหน่ง)</div>
         <div class="num" id="high">—</div>
       </div>
       <div class="value">
-        <div class="label">ครั้งที่ 2 — ค่าน้อย</div>
+        <div class="label">ชุดข้อมูลครั้งที่ 2 — ค่าน้อย (9 ตำแหน่ง)</div>
         <div class="num" id="low">—</div>
       </div>
     </div>
@@ -135,7 +135,7 @@ select{background:#eef2f7;min-width:220px;color:#17202a}
   </div>
 
   <div class="card note">
-    <b>หมายเหตุ:</b> โปรแกรมใช้ OCR อ่านตัวเลขจากภาพ กล้องจะมีกรอบเฉพาะพื้นที่ที่ต้องการอ่าน
+    <b>หมายเหตุ:</b> ทุกการถ่าย/อัปโหลด 1 ครั้งถือเป็นข้อมูล 1 ชุด และต้องอ่านได้ตัวเลข 9 ตำแหน่งพอดี โดยครั้งที่ 1 เป็นค่ามาก ครั้งที่ 2 เป็นค่าน้อย จากนั้นกด “คำนวณ” เพื่อหาผลต่าง กล้องจะมีกรอบเฉพาะพื้นที่ที่ต้องการอ่าน
     เพื่อช่วยลดการอ่านตัวเลขอื่นที่อยู่นอกกรอบ ควรให้ตัวเลขชัด สว่าง และอยู่ภายในกรอบ
     การใช้งานกล้องต้องเปิดผ่าน HTTPS หรือ localhost ในเบราว์เซอร์ที่อนุญาตการใช้กล้อง
   </div>
@@ -203,9 +203,14 @@ async function getWorker(){
 }
 
 function cleanNumber(text){
-  // Keep digits only; this prevents OCR punctuation from becoming part of the value.
+  // ทุกภาพต้องได้ข้อมูลตัวเลข 9 ตำแหน่งพอดี
+  // ตัดเครื่องหมาย/ช่องว่างออก แต่เก็บเฉพาะตัวเลข
   const digits = (text||'').replace(/[^\d]/g,'');
-  return digits ? parseInt(digits,10) : null;
+
+  if(digits.length !== 9) return null;
+
+  // เก็บเป็น Number สำหรับการลบระหว่างชุดข้อมูล
+  return Number(digits);
 }
 
 
@@ -247,20 +252,21 @@ async function recognizeCanvas(sourceCanvas){
 async function readUploadedImage(file, type){
   if(!file) return;
 
-  // อัปโหลดตามลำดับ: ภาพที่ 1 = ค่ามาก, ภาพที่ 2 = ค่าน้อย
   if(type==='high' && high!==null){
-    setStatus('มีค่ามากอยู่แล้ว — กด “เริ่มใหม่” ก่อนเพิ่มภาพชุดใหม่');
+    setStatus('มีชุดข้อมูลที่ 1 แล้ว — กด “เริ่มใหม่” ก่อน');
     highFile.value='';
     return;
   }
   if(type==='low' && low!==null){
-    setStatus('มีค่าน้อยอยู่แล้ว — กด “เริ่มใหม่” ก่อนเพิ่มภาพชุดใหม่');
+    setStatus('มีชุดข้อมูลที่ 2 แล้ว — กด “เริ่มใหม่” ก่อน');
     lowFile.value='';
     return;
   }
 
   try{
-    setStatus(`กำลังวิเคราะห์รูป${type==='high'?'ค่ามาก':'ค่าน้อย'}...`);
+    const datasetNo = type==='high' ? 1 : 2;
+    setStatus(`กำลังอ่านชุดข้อมูลครั้งที่ ${datasetNo} — ต้องเป็นตัวเลข 9 ตำแหน่ง...`);
+
     const bitmap=await createImageBitmap(file);
     const maxW=1600;
     const scale=Math.min(1,maxW/bitmap.width);
@@ -271,8 +277,6 @@ async function readUploadedImage(file, type){
     ctx.drawImage(bitmap,0,0,c.width,c.height);
     bitmap.close();
 
-    // For uploaded photos, crop the central horizontal band corresponding
-    // to the camera guide's narrow Y area while retaining the full X width.
     const sx=Math.round(c.width*0.08);
     const sy=Math.round(c.height*0.37);
     const sw=Math.round(c.width*0.84);
@@ -282,28 +286,32 @@ async function readUploadedImage(file, type){
     crop.getContext('2d').drawImage(c,sx,sy,sw,sh,0,0,sw,sh);
 
     const value=await recognizeCanvas(crop);
+
     if(value===null){
-      setStatus(`อ่านรูป${type==='high'?'ค่ามาก':'ค่าน้อย'}ไม่สำเร็จ กรุณาใช้ภาพที่ตัวเลขชัดและอยู่ในบริเวณกรอบ`);
+      setStatus(`อ่านชุดข้อมูลครั้งที่ ${datasetNo} ไม่สำเร็จ — ต้องมีตัวเลขครบ 9 ตำแหน่งพอดี`);
       return;
     }
 
     if(type==='high'){
       high=value;
-      highEl.textContent=value.toLocaleString('en-US');
-      highFileName.textContent=file.name;
+      highEl.textContent=value.toString();
+      highFileName.textContent=file.name+' — ชุดที่ 1 (9 ตำแหน่ง / ค่ามาก)';
+      shot=Math.max(shot,1);
     }else{
       low=value;
-      lowEl.textContent=value.toLocaleString('en-US');
-      lowFileName.textContent=file.name;
+      lowEl.textContent=value.toString();
+      lowFileName.textContent=file.name+' — ชุดที่ 2 (9 ตำแหน่ง / ค่าน้อย)';
+      shot=Math.max(shot,2);
     }
 
     updateCalculateButton();
+
     if(high!==null && low!==null){
-      setStatus('อ่านครบ 2 ค่าแล้ว — กด “คำนวณ” เพื่อเริ่มคำนวณ');
+      setStatus(`ครบ 2 ชุด: ${high.toString()} − ${low.toString()} — กด “คำนวณ”`);
     }else if(high!==null){
-      setStatus('บันทึกค่ามากแล้ว — กรุณาเพิ่มภาพค่าน้อยเป็นภาพที่ 2');
+      setStatus(`บันทึกชุดที่ 1 = ${high.toString()} — เพิ่มชุดที่ 2 เป็นค่าน้อย`);
     }else{
-      setStatus('บันทึกค่าน้อยแล้ว — กรุณาเพิ่มภาพค่ามากเป็นภาพที่ 1');
+      setStatus(`บันทึกชุดที่ 2 = ${low.toString()} — เพิ่มชุดที่ 1 เป็นค่ามาก`);
     }
   }catch(e){
     setStatus('ไม่สามารถอ่านรูปได้: '+e.message);
@@ -312,42 +320,47 @@ async function readUploadedImage(file, type){
 
 async function captureAndRead(){
   if(!video.videoWidth) return;
+
+  if(shot >= 2){
+    setStatus('มีข้อมูลครบ 2 ชุดแล้ว — กด “เริ่มใหม่” เพื่อถ่ายชุดข้อมูลใหม่');
+    return;
+  }
+
   captureBtn.disabled=true;
   try{
-    // Crop exactly to the visual guide region: X remains wide, Y is reduced to about 1/3 of the previous height.
+    // ถ่ายภาพบริเวณกรอบตัวเลข
     const vw=video.videoWidth, vh=video.videoHeight;
     const sx=Math.round(vw*0.08), sy=Math.round(vh*0.4267);
     const sw=Math.round(vw*0.84), sh=Math.round(vh*0.1466);
     canvas.width=sw; canvas.height=sh;
+
     const ctx=canvas.getContext('2d');
     ctx.drawImage(video,sx,sy,sw,sh,0,0,sw,sh);
 
-    setStatus('กำลังอ่านตัวเลขจากภาพ...');
+    setStatus(`กำลังอ่านชุดข้อมูลครั้งที่ ${shot+1} — ต้องเป็นตัวเลข 9 ตำแหน่ง...`);
     const value=await recognizeCanvas(canvas);
 
     if(value===null){
-      setStatus('อ่านตัวเลขไม่สำเร็จ กรุณาถ่ายใหม่ให้ตัวเลขชัดและอยู่ในกรอบ');
-      return;
-    }
-
-    if(shot >= 2){
-      setStatus('ถ่ายครบ 2 ครั้งแล้ว — กด “เริ่มใหม่” หากต้องการถ่ายชุดใหม่');
+      setStatus('อ่านไม่สำเร็จ — ภาพนี้ต้องมีตัวเลขครบ 9 ตำแหน่งพอดี กรุณาถ่ายใหม่');
       return;
     }
 
     shot++;
+
     if(shot===1){
+      // ภาพครั้งที่ 1 = ชุดข้อมูลค่ามาก
       high=value;
-      highEl.textContent=value.toLocaleString('en-US');
-      highFileName.textContent='ภาพจากกล้อง — ครั้งที่ 1 (ค่ามาก)';
+      highEl.textContent=value.toString();
+      highFileName.textContent='จากกล้อง — ชุดที่ 1 (9 ตำแหน่ง / ค่ามาก)';
       updateCalculateButton();
-      setStatus('ครั้งที่ 1 ถูกบันทึกเป็น “ค่ามาก” แล้ว — กดถ่ายอีกครั้งเพื่อบันทึก “ค่าน้อย”');
+      setStatus(`บันทึกชุดที่ 1 = ${value.toString()} แล้ว — ถ่ายครั้งที่ 2 เป็นชุดข้อมูลค่าน้อย`);
     }else{
+      // ภาพครั้งที่ 2 = ชุดข้อมูลค่าน้อย
       low=value;
-      lowEl.textContent=value.toLocaleString('en-US');
-      lowFileName.textContent='ภาพจากกล้อง — ครั้งที่ 2 (ค่าน้อย)';
+      lowEl.textContent=value.toString();
+      lowFileName.textContent='จากกล้อง — ชุดที่ 2 (9 ตำแหน่ง / ค่าน้อย)';
       updateCalculateButton();
-      setStatus('ครั้งที่ 2 ถูกบันทึกเป็น “ค่าน้อย” แล้ว — กด “คำนวณ” เพื่อเริ่มคำนวณ');
+      setStatus(`บันทึกชุดที่ 2 = ${value.toString()} แล้ว — กด “คำนวณ” เพื่อลบชุดที่ 1 − ชุดที่ 2`);
     }
   }catch(e){
     setStatus('เกิดข้อผิดพลาดในการอ่าน: '+e.message);
@@ -367,12 +380,12 @@ function calculate(){
   }
 
   const base=Number(baseEl.value);
-  const diff=high-low;
+  const diff=high-low; // ชุดข้อมูลครั้งที่ 1 − ชุดข้อมูลครั้งที่ 2
   const pct=(diff/base)*100;
 
   diffEl.textContent=diff.toLocaleString('en-US');
   percentEl.textContent=pct.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
-  formulaEl.textContent=`(${high.toLocaleString('en-US')} − ${low.toLocaleString('en-US')}) ÷ ${base.toLocaleString('en-US')} × 100`;
+  formulaEl.textContent=`ชุดที่ 1 (${high}) − ชุดที่ 2 (${low}) = ${diff.toString()} → ${diff.toLocaleString('en-US')} ÷ ${base.toLocaleString('en-US')} × 100`;
   setStatus('คำนวณเรียบร้อยแล้ว');
 }
 
@@ -385,7 +398,7 @@ function resetAll(){
   highFileName.textContent='ยังไม่ได้เพิ่มรูป';
   lowFileName.textContent='ยังไม่ได้เพิ่มรูป';
   updateCalculateButton();
-  setStatus(stream ? 'พร้อมถ่าย — ครั้งที่ 1 เป็นค่ามาก' : 'กด “เปิดกล้อง” เพื่อเริ่มใช้งาน');
+  setStatus(stream ? 'พร้อมถ่าย — ครั้งที่ 1 = ชุดข้อมูล 9 ตำแหน่ง (ค่ามาก)' : 'กด “เปิดกล้อง” เพื่อเริ่มใช้งาน');
 }
 
 startBtn.addEventListener('click',startCamera);
