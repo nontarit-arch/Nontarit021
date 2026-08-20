@@ -3,20 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Screen Number OCR Calculator & Report</title>
+<title>Screen Number OCR Calculator & Report (Gemini Version)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<!-- ลบ Tesseract.js ออกเพราะเราใช้ Gemini API แทนแล้ว -->
 
 <style>
 *{box-sizing:border-box} body{margin:0;background:#f4f6f8;color:#17202a;font-family:'Kanit',sans-serif} .app{max-width:760px;margin:auto;padding:22px 16px 40px} .header{text-align:center;margin-bottom:18px} .header h1{font-size:27px;margin:0 0 4px;font-weight:600} .header p{margin:0;color:#6b7280;font-size:14px} .card{background:#fff;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 6px 24px rgba(0,0,0,.07)} .card h2{font-size:18px;margin:0 0 12px} .mode-tabs{display:flex;gap:10px;margin-bottom:15px;background:#e9eef5;padding:5px;border-radius:12px} .mode-btn{flex:1;background:transparent;color:#687386;border:none;padding:10px;border-radius:8px;font-weight:500;font-size:15px;transition:all 0.2s} .mode-btn.active{background:#fff;color:#1677ff;box-shadow:0 2px 8px rgba(0,0,0,.1)} .camera-wrap{position:relative;background:#111;border-radius:15px;overflow:hidden;aspect-ratio:16/10} video{width:100%;height:100%;object-fit:cover;display:block} 
 
-/* ----------------------------------------------------------- */
-/* อัปเดตขนาด .guide ตรงนี้: ปรับ top เป็น 39% และ height เป็น 22% */
-/* ----------------------------------------------------------- */
 .guide{position:absolute;left:8%;right:8%;top:39%;height:22%;border:3px solid #38bdf8;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.43);pointer-events:none} 
 .guide:after{content:'จัดตัวเลขให้อยู่ในกรอบนี้';position:absolute;left:50%;top:-34px;transform:translateX(-50%);white-space:nowrap;background:#38bdf8;color:#062033;padding:3px 12px;border-radius:20px;font-size:13px} 
 
@@ -28,11 +25,10 @@
 </style>
 </head>
 <body>
-<!-- โครงสร้างและ Script เหมือนเดิมทั้งหมด -->
 <div class="app">
   <div class="header">
-    <h1>ระบบรายงานผลผลิตโรงงาน</h1>
-    <p>อ่านค่าตัวเลขและจัดรูปแบบรายงาน (ทำงานบนเบราว์เซอร์ 100%)</p>
+    <h1>ระบบรายงานผลผลิตโรงงาน (AI)</h1>
+    <p>อ่านค่าตัวเลขความแม่นยำสูงด้วยพลังของ Gemini API</p>
   </div>
 
   <div class="card">
@@ -71,7 +67,7 @@
       </div>
       
       <div class="row" style="justify-content: center; display: none;" id="cropActionRow">
-        <button id="readCropBtn" class="success capture-large">🔍 อ่านค่าในกรอบ</button>
+        <button id="readCropBtn" class="success capture-large">🔍 อ่านค่าด้วย AI</button>
       </div>
     </div>
 
@@ -148,6 +144,12 @@
 </div>
 
 <script>
+// ==========================================
+// ⚠️ ตั้งค่า API KEY ของคุณที่นี่
+// คำเตือน: รหัสนี้จะมองเห็นได้หากมีคนกดดู Source Code ของเว็บ
+// ==========================================
+const GEMINI_API_KEY = 'ใส่_API_KEY_ของคุณที่นี่';
+
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const startBtn = document.getElementById('startBtn');
@@ -189,7 +191,6 @@ let facing = 'environment';
 let activeTarget = 'high'; 
 let high = null;
 let low = null;
-let worker = null;
 let cropper = null;
 let videoTrack = null;
 
@@ -248,7 +249,7 @@ fileInput.addEventListener('change', (e) => {
   cropper = new Cropper(imageToCrop, {
     viewMode: 1, dragMode: 'crop', autoCropArea: 0.8, restore: false, guides: true, center: true, highlight: false, cropBoxMovable: true, cropBoxResizable: true, toggleDragModeOnDblclick: false,
   });
-  setStatus('ลากปรับขนาดกรอบให้คลุมเฉพาะ "ตัวเลข" ที่ต้องการ แล้วกด "อ่านค่าในกรอบ"');
+  setStatus('ลากปรับขนาดกรอบให้คลุมเฉพาะ "ตัวเลข" ที่ต้องการ แล้วกด "อ่านค่าด้วย AI"');
 });
 
 readCropBtn.addEventListener('click', async () => {
@@ -260,18 +261,18 @@ readCropBtn.addEventListener('click', async () => {
     const croppedCanvas = cropper.getCroppedCanvas();
     const dataUrl = croppedCanvas.toDataURL('image/jpeg'); 
     
-    setStatus(`ระบบกำลังสแกนตัวเลข... (ใช้เวลาสักครู่)`);
+    setStatus(`ระบบกำลังสแกนตัวเลขด้วย Gemini AI...`);
     const value = await recognizeCanvas(croppedCanvas);
 
     if(value === null){
-      setStatus('อ่านไม่สำเร็จ (กรุณาครอบเฉพาะตัวเลข และหลีกเลี่ยงแสงสะท้อน)');
+      setStatus('อ่านไม่สำเร็จ (โปรดตรวจสอบความชัดเจนของภาพ)');
     } else {
       processReadValue(value, dataUrl);
     }
   } catch (e) {
     setStatus('เกิดข้อผิดพลาด: ' + e.message);
   } finally {
-    readCropBtn.disabled = false; readCropBtn.innerHTML = '🔍 อ่านค่าในกรอบ';
+    readCropBtn.disabled = false; readCropBtn.innerHTML = '🔍 อ่านค่าด้วย AI';
   }
 });
 
@@ -312,6 +313,11 @@ async function captureAndRead(){
   if(!video.videoWidth) return;
   if(activeTarget === null){ setStatus('มีข้อมูลครบแล้ว'); return; }
 
+  if(!GEMINI_API_KEY || GEMINI_API_KEY === 'ใส่_API_KEY_ของคุณที่นี่') {
+    setStatus('กรุณาใส่ API Key ของ Gemini ใน Source Code ก่อนใช้งาน');
+    return;
+  }
+
   captureBtn.disabled=true;
   try{
     const videoRect = video.getBoundingClientRect();
@@ -330,7 +336,7 @@ async function captureAndRead(){
     ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
     const dataUrl = canvas.toDataURL('image/jpeg'); 
 
-    setStatus(`ระบบกำลังสแกนตัวเลขจากภาพ...`);
+    setStatus(`ระบบกำลังส่งภาพให้ Gemini วิเคราะห์...`);
     const value = await recognizeCanvas(canvas);
 
     if(value === null){
@@ -345,14 +351,6 @@ async function captureAndRead(){
   }
 }
 
-async function getWorker(){
-  if(worker) return worker;
-  setStatus('กำลังโหลด AI (ทำครั้งเดียว)...');
-  worker = await Tesseract.createWorker('eng');
-  await worker.setParameters({ tessedit_char_whitelist: '0123456789.', tessedit_pageseg_mode: '7' });
-  return worker;
-}
-
 function cleanNumber(text){
   const cleanedText = (text||'').replace(/[^\d.]/g, '');
   if(!cleanedText || cleanedText === '.') return null;
@@ -361,43 +359,52 @@ function cleanNumber(text){
   return value;
 }
 
-function preprocessImage(sourceCanvas, invert = false){
-  const scale = 2;
-  const out = document.createElement('canvas');
-  out.width = sourceCanvas.width * scale; out.height = sourceCanvas.height * scale;
-  const ctx = out.getContext('2d');
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(sourceCanvas, 0, 0, out.width, out.height);
+// ==========================================
+// ฟังก์ชันเรียกใช้งาน Gemini 1.5 Flash API
+// ==========================================
+async function recognizeCanvas(sourceCanvas) {
+  try {
+    const dataUrl = sourceCanvas.toDataURL('image/jpeg');
+    const base64Image = dataUrl.split(',')[1];
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    
+    const payload = {
+      contents: [{
+        parts: [
+          { text: "ดึงเฉพาะค่าตัวเลขจากภาพนี้ ส่งกลับมาแค่ตัวเลขและจุดทศนิยมเท่านั้น ห้ามมีตัวอักษรอื่น เครื่องหมายคอมม่า หรือคำอธิบายใดๆ ทั้งสิ้น" },
+          {
+            inline_data: {
+              mime_type: "image/jpeg",
+              data: base64Image
+            }
+          }
+        ]
+      }]
+    };
 
-  const imgData = ctx.getImageData(0, 0, out.width, out.height);
-  const data = imgData.data;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
 
-  for (let i = 0; i < data.length; i += 4) {
-    let brightness = (data[i] * 0.299) + (data[i + 1] * 0.587) + (data[i + 2] * 0.114);
-    if(invert) brightness = brightness < 128 ? 255 : 0; else brightness = brightness < 128 ? 0 : 255;
-    data[i] = data[i + 1] = data[i + 2] = brightness;
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.candidates && result.candidates.length > 0) {
+      const textOutput = result.candidates[0].content.parts[0].text;
+      return cleanNumber(textOutput.trim());
+    } else {
+      return null;
+    }
+
+  } catch (error) {
+    console.error("Gemini API Error:", error);
+    return null;
   }
-  ctx.putImageData(imgData, 0, 0);
-  return out;
-}
-
-async function recognizeCanvas(sourceCanvas){
-  const w = await getWorker();
-  let processed = preprocessImage(sourceCanvas, false);
-  let result = await w.recognize(processed);
-  let value = cleanNumber(result.data.text);
-
-  if(value === null){
-    processed = preprocessImage(sourceCanvas, true);
-    result = await w.recognize(processed);
-    value = cleanNumber(result.data.text);
-  }
-  
-  if(value === null){
-    result = await w.recognize(sourceCanvas);
-    value = cleanNumber(result.data.text);
-  }
-  return value;
 }
 
 function processReadValue(value, dataUrl = null){
@@ -506,7 +513,6 @@ lowManual.addEventListener('input',()=>{ lowManual.value=lowManual.value.replace
 
 window.addEventListener('beforeunload',()=>{
   if(stream) stream.getTracks().forEach(t=>t.stop());
-  if(worker) worker.terminate();
 });
 </script>
 </body>
