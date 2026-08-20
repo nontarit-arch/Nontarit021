@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Number Difference OCR Calculator</title>
+<title>Screen Number OCR Calculator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -52,12 +52,12 @@ select{background:#eef2f7;min-width:220px;color:#17202a;border:none}
 <body>
 <div class="app">
   <div class="header">
-    <h1>อ่านค่าตัวเลขจากกล้อง</h1>
-    <p>ถ่ายแต่ละครั้ง = ชุดข้อมูลตัวเลข 9 ตำแหน่ง → AI อ่านค่า → บันทึกอัตโนมัติ | หากถ่ายไม่ติดสามารถกรอกตัวเลขแทนได้</p>
+    <h1>อ่านค่าตัวเลขจากหน้าจอ</h1>
+    <p>ถ่ายแต่ละครั้ง = ชุดข้อมูลตัวเลข 9 ตำแหน่ง (รวมจุดทศนิยม) → AI อ่านค่า → บันทึกอัตโนมัติ</p>
   </div>
 
   <div class="card">
-    <h2>1. กล้องถ่ายตัวเลข 9 ตำแหน่ง</h2>
+    <h2>1. กล้องถ่ายตัวเลข (เน้นให้อยู่ในกรอบ)</h2>
     <div class="camera-wrap">
       <video id="video" autoplay playsinline muted></video>
       <div class="guide"></div>
@@ -69,13 +69,13 @@ select{background:#eef2f7;min-width:220px;color:#17202a;border:none}
     </div>
     <div class="upload-grid">
       <div class="upload-box">
-        <div class="upload-title">ทางเลือก: กรอกชุดข้อมูลที่ 1 — ค่ามาก (9 ตำแหน่ง)</div>
-        <input id="highManual" class="manual-input" type="text" inputmode="numeric" maxlength="9" pattern="[0-9]{9}" placeholder="กรอกตัวเลข 9 หลัก">
+        <div class="upload-title">ทางเลือก: กรอกชุดที่ 1 — ค่ามาก</div>
+        <input id="highManual" class="manual-input" type="text" inputmode="decimal" placeholder="กรอกตัวเลขเช่น 29148378.0">
         <button id="highManualBtn" class="secondary upload-btn" type="button">บันทึกชุดข้อมูลที่ 1</button>
       </div>
       <div class="upload-box">
-        <div class="upload-title">ทางเลือก: กรอกชุดข้อมูลที่ 2 — ค่าน้อย (9 ตำแหน่ง)</div>
-        <input id="lowManual" class="manual-input" type="text" inputmode="numeric" maxlength="9" pattern="[0-9]{9}" placeholder="กรอกตัวเลข 9 หลัก">
+        <div class="upload-title">ทางเลือก: กรอกชุดที่ 2 — ค่าน้อย</div>
+        <input id="lowManual" class="manual-input" type="text" inputmode="decimal" placeholder="กรอกตัวเลขเช่น 29131626.0">
         <button id="lowManualBtn" class="secondary upload-btn" type="button">บันทึกชุดข้อมูลที่ 2</button>
       </div>
     </div>
@@ -95,11 +95,11 @@ select{background:#eef2f7;min-width:220px;color:#17202a;border:none}
     <h2>3. ค่าที่อ่านได้</h2>
     <div class="values">
       <div class="value">
-        <div class="label">ชุดข้อมูลครั้งที่ 1 — ค่ามาก (9 ตำแหน่ง)</div>
+        <div class="label">ชุดข้อมูลครั้งที่ 1 — ค่ามาก</div>
         <div class="num" id="high">—</div>
       </div>
       <div class="value">
-        <div class="label">ชุดข้อมูลครั้งที่ 2 — ค่าน้อย (9 ตำแหน่ง)</div>
+        <div class="label">ชุดข้อมูลครั้งที่ 2 — ค่าน้อย</div>
         <div class="num" id="low">—</div>
       </div>
     </div>
@@ -128,10 +128,6 @@ select{background:#eef2f7;min-width:220px;color:#17202a;border:none}
       </div>
       <div class="big" id="percent">—</div>
     </div>
-  </div>
-
-  <div class="card note">
-    <b>หมายเหตุ:</b> ทุกการถ่าย 1 ครั้งถือเป็นข้อมูล 1 ชุด และ AI OCR จะอ่านตัวเลขอัตโนมัติ ต้องอ่านได้ 9 ตำแหน่งพอดี หากถ่ายไม่สำเร็จสามารถกรอกทางเลือกแทนได้
   </div>
 </div>
 
@@ -172,7 +168,7 @@ async function startCamera(){
         facingMode: { ideal: facing },
         width: { ideal: 1280 },
         height: { ideal: 720 },
-        advanced: [{ focusMode: "continuous" }] // บังคับโฟกัสอัตโนมัติตลอดเวลา
+        advanced: [{ focusMode: "continuous" }]
       },
       audio: false
     });
@@ -180,7 +176,7 @@ async function startCamera(){
     await video.play();
     captureBtn.disabled=false;
     switchBtn.disabled=false;
-    setStatus('พร้อมถ่าย — จัดตัวเลขให้อยู่ในกรอบ แล้วกด “ถ่ายรูป”');
+    setStatus('พร้อมถ่าย — จัดตัวเลขให้อยู่ในกรอบ (พยายามให้หน้าจอชัดที่สุด) แล้วกด “ถ่ายรูป”');
   }catch(e){
     setStatus('ไม่สามารถเปิดกล้องได้: '+e.message);
   }
@@ -188,31 +184,41 @@ async function startCamera(){
 
 async function getWorker(){
   if(worker) return worker;
-  setStatus('กำลังเตรียม AI OCR สำหรับอ่านตัวเลขครั้งแรก...');
+  setStatus('กำลังเตรียม AI OCR สำหรับอ่านตัวเลขหน้าจอ...');
   worker = await Tesseract.createWorker('eng');
   await worker.setParameters({
-    tessedit_char_whitelist: '0123456789', // กรองเฉพาะตัวเลขเพื่อลดความสับสน
-    tessedit_pageseg_mode: '7' // โหมดบรรทัดเดียว (Single Line)
+    // เพิ่มจุดและลูกน้ำใน Whitelist เพื่อให้อ่านรูปแบบจอภาพได้
+    tessedit_char_whitelist: '0123456789,.',
+    tessedit_pageseg_mode: '7' 
   });
   return worker;
 }
 
 function cleanNumber(text){
-  const digits = (text||'').replace(/[^\d]/g,'');
-  if(digits.length !== 9) return null;
-  return Number(digits);
+  // ลบทุกอย่างที่ไม่ใช่ตัวเลขและจุดทศนิยมออก
+  const cleanedText = (text||'').replace(/[^\d.]/g, '');
+  
+  // นับเฉพาะจำนวนหลักตัวเลข (ไม่นับจุดทศนิยม) เพื่อตรวจสอบความถูกต้อง
+  const digitOnly = cleanedText.replace(/\./g, '');
+  
+  // ถ้าตัวเลขบนหน้าจอมี 9 หลักเสมอ (เช่น 29,148,378.0 มีเลข 9 ตัว) 
+  if(digitOnly.length !== 9) return null;
+  
+  const value = parseFloat(cleanedText);
+  if (isNaN(value)) return null;
+  return value;
 }
 
-// อัปเกรดการทำภาพให้ชัดเจนขึ้นด้วย Adaptive Thresholding
 function preprocessImage(sourceCanvas){
   const w = sourceCanvas.width;
   const h = sourceCanvas.height;
-  const scale = 3; // ขยายภาพเพื่อให้ตัวเลขชัดขึ้น
+  const scale = 3; 
   const out = document.createElement('canvas');
   out.width = w * scale;
   out.height = h * scale;
   
   const ctx = out.getContext('2d', { willReadFrequently: true });
+  // การเปิด Smoothing ช่วยลดเม็ดพิกเซล (Moiré) บนหน้าจอได้ส่วนหนึ่ง
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(sourceCanvas, 0, 0, out.width, out.height);
@@ -257,13 +263,34 @@ function preprocessImage(sourceCanvas){
 async function recognizeCanvas(sourceCanvas){
   const w = await getWorker();
   const processed = preprocessImage(sourceCanvas);
+  
+  // 1. ลองอ่านแบบปกติ (สำหรับบรรทัดพื้นสีเทา ตัวหนังสือดำ)
   let result = await w.recognize(processed);
   let value = cleanNumber(result.data.text);
 
   if(value === null){
+    // 2. ถ้าอ่านไม่ได้ อาจจะถ่ายติดบรรทัดแถบสีฟ้า (ตัวหนังสือขาว) ให้ทำการสลับสี (Invert) 
+    const ctx = processed.getContext('2d');
+    const imgData = ctx.getImageData(0, 0, processed.width, processed.height);
+    const d = imgData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      d[i] = 255 - d[i];       // R
+      d[i + 1] = 255 - d[i + 1]; // G
+      d[i + 2] = 255 - d[i + 2]; // B
+    }
+    ctx.putImageData(imgData, 0, 0);
+    
+    // ลองให้อ่านใหม่อีกครั้ง
+    result = await w.recognize(processed);
+    value = cleanNumber(result.data.text);
+  }
+  
+  // 3. Fallback สุดท้าย นำภาพต้นฉบับมาให้ AI อ่านโดยตรง
+  if(value === null){
     result = await w.recognize(sourceCanvas);
     value = cleanNumber(result.data.text);
   }
+  
   return value;
 }
 
@@ -289,11 +316,11 @@ async function captureAndRead(){
     const ctx=canvas.getContext('2d');
     ctx.drawImage(video,sx,sy,sw,sh,0,0,sw,sh);
 
-    setStatus(`AI OCR กำลังอ่านชุดข้อมูลครั้งที่ ${shot+1} — ต้องเป็นตัวเลข 9 ตำแหน่ง...`);
+    setStatus(`AI OCR กำลังอ่านชุดข้อมูลครั้งที่ ${shot+1} หน้าจอ...`);
     const value=await recognizeCanvas(canvas);
 
     if(value===null){
-      setStatus('AI OCR อ่านไม่สำเร็จ — กรุณาถ่ายใหม่ หรือใช้ช่องกรอกตัวเลขเป็นทางเลือก');
+      setStatus('AI OCR อ่านไม่สำเร็จ (ตรวจสอบแสงสะท้อนหรือการโฟกัส) — ถ่ายใหม่หรือกรอกข้อมูลแทน');
       return;
     }
 
@@ -301,14 +328,15 @@ async function captureAndRead(){
 
     if(shot===1){
       high=value;
-      highEl.textContent=value.toString();
+      // จัดรูปแบบตัวเลขให้โชว์จุดทศนิยม
+      highEl.textContent=value.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
       updateCalculateButton();
-      setStatus(`บันทึกชุดที่ 1 = ${value.toString()} แล้ว — ถ่ายครั้งที่ 2 เป็นชุดข้อมูลค่าน้อย`);
+      setStatus(`บันทึกชุดที่ 1 = ${highEl.textContent} แล้ว — ถ่ายครั้งที่ 2 เป็นชุดข้อมูลค่าน้อย`);
     }else{
       low=value;
-      lowEl.textContent=value.toString();
+      lowEl.textContent=value.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
       updateCalculateButton();
-      setStatus(`บันทึกชุดที่ 2 = ${value.toString()} แล้ว — กด “คำนวณ” เพื่อลบชุดที่ 1 − ชุดที่ 2`);
+      setStatus(`บันทึกชุดที่ 2 = ${lowEl.textContent} แล้ว — กด “คำนวณ”`);
     }
   }catch(e){
     setStatus('เกิดข้อผิดพลาดในการอ่าน: '+e.message);
@@ -331,9 +359,9 @@ function calculate(){
   const diff=high-low;
   const pct=(diff/base)*100;
 
-  diffEl.textContent=diff.toLocaleString('en-US');
+  diffEl.textContent=diff.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
   percentEl.textContent=pct.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
-  formulaEl.textContent=`ชุดที่ 1 (${high}) − ชุดที่ 2 (${low}) = ${diff.toString()} → ${diff.toLocaleString('en-US')} ÷ ${base.toLocaleString('en-US')} × 100`;
+  formulaEl.textContent=`ชุดที่ 1 (${high.toFixed(1)}) − ชุดที่ 2 (${low.toFixed(1)}) = ${diff.toFixed(1)} → ${diff.toLocaleString('en-US')} ÷ ${base.toLocaleString('en-US')} × 100`;
   setStatus('คำนวณเรียบร้อยแล้ว');
 }
 
@@ -379,7 +407,7 @@ function saveManualValue(type){
   const value = cleanNumber(input.value);
 
   if(value===null){
-    setStatus('กรุณากรอกตัวเลขให้ครบ 9 ตำแหน่งพอดี');
+    setStatus('กรุณากรอกตัวเลขให้ครบ 9 หลักพอดี (ไม่นับจุดทศนิยม)');
     input.focus();
     return;
   }
@@ -390,34 +418,35 @@ function saveManualValue(type){
       return;
     }
     high=value;
-    highEl.textContent=value.toString();
+    highEl.textContent=value.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
     shot=Math.max(shot,1);
-    setStatus(`บันทึกชุดข้อมูลที่ 1 = ${value} จากการกรอกตัวเลขแล้ว`);
+    setStatus(`บันทึกชุดข้อมูลที่ 1 = ${highEl.textContent} จากการกรอกตัวเลขแล้ว`);
   }else{
     if(low!==null){
       setStatus('มีชุดข้อมูลที่ 2 แล้ว — กด “เริ่มใหม่” ก่อน');
       return;
     }
     low=value;
-    lowEl.textContent=value.toString();
+    lowEl.textContent=value.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
     shot=Math.max(shot,2);
-    setStatus(`บันทึกชุดข้อมูลที่ 2 = ${value} จากการกรอกตัวเลขแล้ว`);
+    setStatus(`บันทึกชุดข้อมูลที่ 2 = ${lowEl.textContent} จากการกรอกตัวเลขแล้ว`);
   }
 
   updateCalculateButton();
   if(high!==null && low!==null){
-    setStatus(`ครบ 2 ชุด: ${high} − ${low} — กด “คำนวณ”`);
+    setStatus(`ครบ 2 ชุดแล้ว — กด “คำนวณ”`);
   }
 }
 
 highManualBtn.addEventListener('click',()=>saveManualValue('high'));
 lowManualBtn.addEventListener('click',()=>saveManualValue('low'));
 
+// อนุญาตให้พิมพ์จุดทศนิยมได้
 highManual.addEventListener('input',()=>{
-  highManual.value=highManual.value.replace(/\D/g,'').slice(0,9);
+  highManual.value=highManual.value.replace(/[^\d.]/g,'');
 });
 lowManual.addEventListener('input',()=>{
-  lowManual.value=lowManual.value.replace(/\D/g,'').slice(0,9);
+  lowManual.value=lowManual.value.replace(/[^\d.]/g,'');
 });
 
 window.addEventListener('beforeunload',()=>{
