@@ -23,6 +23,15 @@ video{width:100%;height:100%;object-fit:cover;display:block}
 .guide:after{content:'จัดตัวเลขให้อยู่ในกรอบนี้';position:absolute;left:50%;top:-34px;transform:translateX(-50%);white-space:nowrap;background:#38bdf8;color:#062033;padding:3px 12px;border-radius:20px;font-size:13px}
 .row{display:flex;gap:10px;flex-wrap:wrap}
 button,select{font-family:inherit;border:0;border-radius:11px;padding:12px 15px;font-size:15px}
+.capture-large{font-size:19px!important;padding:17px 30px!important;min-width:190px;box-shadow:0 5px 14px rgba(15,157,115,.25)}
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.upload-box{background:#f7f9fb;border:1px solid #e1e7ef;border-radius:13px;padding:12px}
+.upload-title{font-size:14px;font-weight:500;margin-bottom:8px}
+.upload-box input{display:none}
+.upload-btn{width:100%;font-size:14px}
+.file-name{font-size:12px;color:#7a8494;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:520px){.upload-grid{grid-template-columns:1fr}.capture-large{width:100%;font-size:20px!important;padding:18px!important}}
+
 button{cursor:pointer;background:#1677ff;color:#fff;font-weight:500}
 button.secondary{background:#e9eef5;color:#243447}
 button.success{background:#0f9d73}
@@ -57,8 +66,22 @@ select{background:#eef2f7;min-width:220px;color:#17202a}
     </div>
     <div class="row" style="margin-top:12px">
       <button id="startBtn">เปิดกล้อง</button>
-      <button id="captureBtn" class="success" disabled>ถ่ายรูป</button>
+      <button id="captureBtn" class="success capture-large" disabled>📷 ถ่ายรูป</button>
       <button id="switchBtn" class="secondary" disabled>สลับกล้อง</button>
+    </div>
+    <div class="upload-grid">
+      <div class="upload-box">
+        <div class="upload-title">ค่ามาก — สูงสุด 1 ภาพ</div>
+        <input id="highFile" type="file" accept="image/*" capture="environment">
+        <button id="highUploadBtn" class="secondary upload-btn" type="button">📁 เพิ่มรูปค่ามาก</button>
+        <div id="highFileName" class="file-name">ยังไม่ได้เพิ่มรูป</div>
+      </div>
+      <div class="upload-box">
+        <div class="upload-title">ค่าน้อย — สูงสุด 1 ภาพ</div>
+        <input id="lowFile" type="file" accept="image/*" capture="environment">
+        <button id="lowUploadBtn" class="secondary upload-btn" type="button">📁 เพิ่มรูปค่าน้อย</button>
+        <div id="lowFileName" class="file-name">ยังไม่ได้เพิ่มรูป</div>
+      </div>
     </div>
     <div id="status" class="status">กด “เปิดกล้อง” เพื่อเริ่มใช้งาน</div>
     <canvas id="canvas" style="display:none"></canvas>
@@ -129,6 +152,12 @@ const percentEl = document.getElementById('percent');
 const formulaEl = document.getElementById('formula');
 const baseEl = document.getElementById('base');
 const resetBtn = document.getElementById('resetBtn');
+const highFile = document.getElementById('highFile');
+const lowFile = document.getElementById('lowFile');
+const highUploadBtn = document.getElementById('highUploadBtn');
+const lowUploadBtn = document.getElementById('lowUploadBtn');
+const highFileName = document.getElementById('highFileName');
+const lowFileName = document.getElementById('lowFileName');
 
 let stream = null;
 let facing = 'environment';
@@ -173,6 +202,95 @@ function cleanNumber(text){
   return digits ? parseInt(digits,10) : null;
 }
 
+
+function preprocessImage(sourceCanvas){
+  const w=sourceCanvas.width, h=sourceCanvas.height;
+  const out=document.createElement('canvas');
+  out.width=w*2; out.height=h*2;
+  const ctx=out.getContext('2d',{willReadFrequently:true});
+  ctx.imageSmoothingEnabled=true;
+  ctx.drawImage(sourceCanvas,0,0,out.width,out.height);
+
+  const img=ctx.getImageData(0,0,out.width,out.height);
+  const d=img.data;
+  for(let i=0;i<d.length;i+=4){
+    const gray=(0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]);
+    // Stronger local contrast for digital/industrial displays.
+    const v=gray>150?255:gray<90?0:Math.round((gray-90)*255/60);
+    d[i]=d[i+1]=d[i+2]=v;
+  }
+  ctx.putImageData(img,0,0);
+  return out;
+}
+
+async function recognizeCanvas(sourceCanvas){
+  const w=await getWorker();
+  // First pass: enhanced image.
+  const processed=preprocessImage(sourceCanvas);
+  let result=await w.recognize(processed);
+  let value=cleanNumber(result.data.text);
+
+  // Second pass on original crop if first pass fails.
+  if(value===null){
+    result=await w.recognize(sourceCanvas);
+    value=cleanNumber(result.data.text);
+  }
+  return value;
+}
+
+async function readUploadedImage(file, type){
+  if(!file) return;
+  try{
+    setStatus(`กำลังวิเคราะห์รูป${type==='high'?'ค่ามาก':'ค่าน้อย'}...`);
+    const bitmap=await createImageBitmap(file);
+    const maxW=1600;
+    const scale=Math.min(1,maxW/bitmap.width);
+    const c=document.createElement('canvas');
+    c.width=Math.max(1,Math.round(bitmap.width*scale));
+    c.height=Math.max(1,Math.round(bitmap.height*scale));
+    const ctx=c.getContext('2d');
+    ctx.drawImage(bitmap,0,0,c.width,c.height);
+    bitmap.close();
+
+    // For uploaded photos, crop the central horizontal band corresponding
+    // to the camera guide's narrow Y area while retaining the full X width.
+    const sx=Math.round(c.width*0.08);
+    const sy=Math.round(c.height*0.37);
+    const sw=Math.round(c.width*0.84);
+    const sh=Math.max(20,Math.round(c.height*0.16));
+    const crop=document.createElement('canvas');
+    crop.width=sw; crop.height=sh;
+    crop.getContext('2d').drawImage(c,sx,sy,sw,sh,0,0,sw,sh);
+
+    const value=await recognizeCanvas(crop);
+    if(value===null){
+      setStatus(`อ่านรูป${type==='high'?'ค่ามาก':'ค่าน้อย'}ไม่สำเร็จ กรุณาใช้ภาพที่ตัวเลขชัดและอยู่ในบริเวณกรอบ`);
+      return;
+    }
+
+    if(type==='high'){
+      high=value;
+      highEl.textContent=value.toLocaleString('en-US');
+      highFileName.textContent=file.name;
+    }else{
+      low=value;
+      lowEl.textContent=value.toLocaleString('en-US');
+      lowFileName.textContent=file.name;
+    }
+
+    // If values are reversed, normalize them.
+    if(high!==null && low!==null && high<low){
+      [high,low]=[low,high];
+      highEl.textContent=high.toLocaleString('en-US');
+      lowEl.textContent=low.toLocaleString('en-US');
+    }
+    calculate();
+    setStatus('อ่านค่าจากรูปเรียบร้อย');
+  }catch(e){
+    setStatus('ไม่สามารถอ่านรูปได้: '+e.message);
+  }
+}
+
 async function captureAndRead(){
   if(!video.videoWidth) return;
   captureBtn.disabled=true;
@@ -186,9 +304,7 @@ async function captureAndRead(){
     ctx.drawImage(video,sx,sy,sw,sh,0,0,sw,sh);
 
     setStatus('กำลังอ่านตัวเลขจากภาพ...');
-    const w=await getWorker();
-    const result=await w.recognize(canvas);
-    const value=cleanNumber(result.data.text);
+    const value=await recognizeCanvas(canvas);
 
     if(value===null){
       setStatus('อ่านตัวเลขไม่สำเร็จ กรุณาถ่ายใหม่ให้ตัวเลขชัดและอยู่ในกรอบ');
@@ -199,15 +315,15 @@ async function captureAndRead(){
     if(shot===1){
       high=value;
       highEl.textContent=value.toLocaleString('en-US');
-      setStatus('บันทึกค่ามากแล้ว → กรุณาถ่ายครั้งที่ 2 เป็นค่าน้อย');
+      setStatus('บันทึกค่ามากแล้ว — หากต้องการใช้กล้องต่อ ให้ถ่ายครั้งที่ 2 เป็นค่าน้อย หรือเพิ่มรูปในช่องค่าน้อย');
     }else{
       low=value;
       lowEl.textContent=value.toLocaleString('en-US');
-      if(high < low){
+      if(high !== null && high < low){
         [high,low]=[low,high];
         highEl.textContent=high.toLocaleString('en-US');
         lowEl.textContent=low.toLocaleString('en-US');
-        setStatus('ตรวจพบว่าค่าครั้งที่ 2 มากกว่า ระบบสลับให้ค่ามากอยู่ด้านบนโดยอัตโนมัติ');
+        setStatus('ตรวจพบค่ากลับด้าน ระบบสลับเป็นค่ามาก/ค่าน้อยให้อัตโนมัติ');
       }else{
         setStatus('อ่านครบ 2 ค่าแล้ว');
       }
@@ -235,6 +351,9 @@ function resetAll(){
   highEl.textContent='—'; lowEl.textContent='—';
   diffEl.textContent='—'; percentEl.textContent='—';
   formulaEl.textContent='ยังไม่มีข้อมูล';
+  highFile.value=''; lowFile.value='';
+  highFileName.textContent='ยังไม่ได้เพิ่มรูป';
+  lowFileName.textContent='ยังไม่ได้เพิ่มรูป';
   setStatus(stream ? 'พร้อมถ่าย — ครั้งที่ 1 เป็นค่ามาก' : 'กด “เปิดกล้อง” เพื่อเริ่มใช้งาน');
 }
 
@@ -263,6 +382,11 @@ document.querySelectorAll('.copy-btn').forEach(btn=>{
     }
   });
 });
+
+highUploadBtn.addEventListener('click',()=>highFile.click());
+lowUploadBtn.addEventListener('click',()=>lowFile.click());
+highFile.addEventListener('change',()=>readUploadedImage(highFile.files[0],'high'));
+lowFile.addEventListener('change',()=>readUploadedImage(lowFile.files[0],'low'));
 
 window.addEventListener('beforeunload',()=>{
   if(stream) stream.getTracks().forEach(t=>t.stop());
