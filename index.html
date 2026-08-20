@@ -1,1132 +1,273 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <title>AR Airplane Figure 8 - 8 Planes</title>
-
-  <!-- =========================================
-       A-FRAME
-  ========================================== -->
-  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-
-  <!-- =========================================
-       AR.JS
-  ========================================== -->
-  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/three.js/build/ar-threex-location-only.js"></script>
-
-  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
-
-
-  <style>
-
-    html,
-    body {
-
-      margin: 0;
-      padding: 0;
-
-      width: 100%;
-      height: 100%;
-
-      overflow: hidden;
-
-      font-family: Arial, sans-serif;
-
-      background: transparent;
-    }
-
-
-    /* =========================================
-       แถบปุ่มควบคุม
-       ใช้ flexbox + ขนาดปรับตามหน้าจอด้วย clamp()
-       แทนขนาด fixed px ที่ใหญ่เกินไปเดิม
-    ========================================== */
-
-    #controls {
-
-      position: fixed;
-      z-index: 9999;
-
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 16px;
-
-      width: 100%;
-      max-width: 900px;
-
-      padding: 0 12px;
-      box-sizing: border-box;
-    }
-
-
-    .ctrlButton {
-
-      flex: 0 1 auto;
-
-      border: none;
-      border-radius: 60px;
-
-      /* ปุ่มใหญ่ขึ้น ~3 เท่าจากเดิม แต่ยังปรับตามความกว้างจอด้วย clamp() */
-      padding: clamp(30px, 7.8vw, 48px) clamp(48px, 13.5vw, 78px);
-      font-size: clamp(28px, 8vw, 42px);
-      font-weight: bold;
-
-      background: rgba(0, 0, 0, 0.75);
-      color: white;
-
-      box-shadow: 0 5px 20px rgba(0,0,0,0.4);
-      cursor: pointer;
-
-      white-space: nowrap;
-
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .ctrlButton:active {
-      transform: scale(0.95);
-    }
-
-    /* สถานะ active ของปุ่ม toggle (หยุดบิน / ควงสว่าน) */
-    .ctrlButton.active {
-      background: rgba(33, 150, 243, 0.9);
-    }
-
-
-    /* =========================================
-       ข้อความความเร็ว
-    ========================================== */
-
-    #speedText {
-
-      position: fixed;
-
-      z-index: 9999;
-
-      top: 20px;
-
-      left: 50%;
-
-      transform: translateX(-50%);
-
-      padding: 8px 16px;
-
-      border-radius: 20px;
-
-      background: rgba(0,0,0,0.6);
-
-      color: white;
-
-      font-size: clamp(12px, 3.5vw, 15px);
-
-      white-space: nowrap;
-    }
-
-  </style>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Number Difference OCR Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f4f6f8;color:#17202a;font-family:'Kanit',sans-serif}
+.app{max-width:760px;margin:auto;padding:22px 16px 40px}
+.header{text-align:center;margin-bottom:18px}
+.header h1{font-size:27px;margin:0 0 4px;font-weight:600}
+.header p{margin:0;color:#6b7280;font-size:14px}
+.card{background:#fff;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 6px 24px rgba(0,0,0,.07)}
+.card h2{font-size:18px;margin:0 0 12px}
+.camera-wrap{position:relative;background:#111;border-radius:15px;overflow:hidden;aspect-ratio:16/10}
+video{width:100%;height:100%;object-fit:cover;display:block}
+.guide{position:absolute;left:8%;right:8%;top:42.67%;height:14.66%;border:3px solid #38bdf8;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.43);pointer-events:none}
+.guide:after{content:'จัดตัวเลขให้อยู่ในกรอบนี้';position:absolute;left:50%;top:-34px;transform:translateX(-50%);white-space:nowrap;background:#38bdf8;color:#062033;padding:3px 12px;border-radius:20px;font-size:13px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+button,select{font-family:inherit;border:0;border-radius:11px;padding:12px 15px;font-size:15px}
+button{cursor:pointer;background:#1677ff;color:#fff;font-weight:500}
+button.secondary{background:#e9eef5;color:#243447}
+button.success{background:#0f9d73}
+button:disabled{opacity:.5;cursor:not-allowed}
+.copy-btn{background:#fff;color:#17202a;padding:7px 12px;font-size:13px;border-radius:8px;font-weight:500}
+.copy-btn:hover{background:#eef2f7}
+select{background:#eef2f7;min-width:220px;color:#17202a}
+.status{font-size:13px;color:#687386;margin-top:10px;min-height:20px}
+.values{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.value{background:#f7f9fb;border-radius:13px;padding:14px}
+.label{font-size:13px;color:#707b8c}.num{font-size:29px;font-weight:600;margin-top:2px;word-break:break-all}
+.result{background:#101828;color:#fff;border-radius:15px;padding:18px}
+.result .big{font-size:40px;font-weight:600;line-height:1.1}
+.result small{color:#b8c1ce}
+.formula{margin-top:9px;color:#d5dbe3;font-size:14px}
+.note{font-size:12px;color:#7a8494;line-height:1.6}
+@media(max-width:520px){.values{grid-template-columns:1fr}.header h1{font-size:23px}.guide{left:8%;right:8%}}
+</style>
 </head>
-
-
 <body>
-
-
-  <!-- =========================================
-       UI
-  ========================================== -->
-
-  <div id="speedText">
-    ความเร็ว: 1x
+<div class="app">
+  <div class="header">
+    <h1>อ่านค่าตัวเลขจากกล้อง</h1>
+    <p>ถ่าย 2 ครั้ง → ค่ามาก − ค่าน้อย → หารค่าฐาน → × 100</p>
   </div>
 
-
-  <div id="controls">
-
-    <button id="speedButton" class="ctrlButton">
-      ✈️ เพิ่มความเร็ว
-    </button>
-
-    <button id="stopButton" class="ctrlButton">
-      ⏸️ หยุดบิน
-    </button>
-
-    <button id="barrelButton" class="ctrlButton">
-      🌀 หมุนควงสว่าน
-    </button>
-
+  <div class="card">
+    <h2>1. กล้องถ่ายตัวเลข</h2>
+    <div class="camera-wrap">
+      <video id="video" autoplay playsinline muted></video>
+      <div class="guide"></div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button id="startBtn">เปิดกล้อง</button>
+      <button id="captureBtn" class="success" disabled>ถ่ายรูป</button>
+      <button id="switchBtn" class="secondary" disabled>สลับกล้อง</button>
+    </div>
+    <div id="status" class="status">กด “เปิดกล้อง” เพื่อเริ่มใช้งาน</div>
+    <canvas id="canvas" style="display:none"></canvas>
   </div>
 
-
-
-  <!-- =========================================
-       AR SCENE
-  ========================================== -->
-
-  <a-scene
-
-    embedded
-
-    vr-mode-ui="enabled: false"
-
-    renderer="
-      logarithmicDepthBuffer: true;
-      colorManagement: true;
-    "
-
-    arjs="
-      sourceType: webcam;
-      debugUIEnabled: false;
-    "
-  >
-
-
-
-    <!-- =======================================
-         HIRO MARKER
-    ======================================== -->
-
-    <a-marker
-
-      id="hiroMarker"
-
-      preset="hiro"
-
-      emitevents="true"
-    >
-
-
-
-      <!-- =====================================
-           เครื่องบินลำที่ 1
-      ====================================== -->
-
-      <a-entity
-
-        id="plane1"
-
-        position="0 0.65 0"
-
-        scale="0.22 0.22 0.22"
-      >
-
-        <a-box
-          depth="1.6"
-          height="0.18"
-          width="0.22"
-          color="#eeeeee">
-        </a-box>
-
-
-        <a-box
-          depth="0.25"
-          height="0.08"
-          width="1.8"
-          color="#2196f3">
-        </a-box>
-
-
-        <a-box
-          position="0 0.08 0.65"
-          depth="0.35"
-          height="0.35"
-          width="0.08"
-          color="#1976d2">
-        </a-box>
-
-
-        <a-box
-          position="0 0 0.65"
-          depth="0.2"
-          height="0.05"
-          width="0.65"
-          color="#1976d2">
-        </a-box>
-
-
-        <a-cone
-          position="0 0 -0.9"
-          rotation="90 0 0"
-          radius-bottom="0.15"
-          radius-top="0"
-          height="0.35"
-          color="#ffffff">
-        </a-cone>
-
-      </a-entity>
-
-
-
-      <!-- =====================================
-           เครื่องบินลำที่ 2
-      ====================================== -->
-
-      <a-entity
-
-        id="plane2"
-
-        position="0 0.77 0"
-
-        scale="0.21 0.21 0.21"
-      >
-
-        <a-box
-          depth="1.6"
-          height="0.18"
-          width="0.22"
-          color="#eeeeee">
-        </a-box>
-
-
-        <a-box
-          depth="0.25"
-          height="0.08"
-          width="1.8"
-          color="#f44336">
-        </a-box>
-
-
-        <a-box
-          position="0 0.08 0.65"
-          depth="0.35"
-          height="0.35"
-          width="0.08"
-          color="#c62828">
-        </a-box>
-
-
-        <a-box
-          position="0 0 0.65"
-          depth="0.2"
-          height="0.05"
-          width="0.65"
-          color="#c62828">
-        </a-box>
-
-
-        <a-cone
-          position="0 0 -0.9"
-          rotation="90 0 0"
-          radius-bottom="0.15"
-          radius-top="0"
-          height="0.35"
-          color="#ffffff">
-        </a-cone>
-
-      </a-entity>
-
-
-
-      <!-- =====================================
-           เครื่องบินลำที่ 3
-      ====================================== -->
-
-      <a-entity
-
-        id="plane3"
-
-        position="0 0.89 0"
-
-        scale="0.20 0.20 0.20"
-      >
-
-        <a-box
-          depth="1.6"
-          height="0.18"
-          width="0.22"
-          color="#eeeeee">
-        </a-box>
-
-
-        <a-box
-          depth="0.25"
-          height="0.08"
-          width="1.8"
-          color="#4caf50">
-        </a-box>
-
-
-        <a-box
-          position="0 0.08 0.65"
-          depth="0.35"
-          height="0.35"
-          width="0.08"
-          color="#2e7d32">
-        </a-box>
-
-
-        <a-box
-          position="0 0 0.65"
-          depth="0.2"
-          height="0.05"
-          width="0.65"
-          color="#2e7d32">
-        </a-box>
-
-
-        <a-cone
-          position="0 0 -0.9"
-          rotation="90 0 0"
-          radius-bottom="0.15"
-          radius-top="0"
-          height="0.35"
-          color="#ffffff">
-        </a-cone>
-
-      </a-entity>
-
-
-
-      <!-- =====================================
-           เครื่องบินลำที่ 4
-      ====================================== -->
-
-      <a-entity
-
-        id="plane4"
-
-        position="0 1.01 0"
-
-        scale="0.19 0.19 0.19"
-      >
-
-        <a-box
-          depth="1.6"
-          height="0.18"
-          width="0.22"
-          color="#eeeeee">
-        </a-box>
-
-
-        <a-box
-          depth="0.25"
-          height="0.08"
-          width="1.8"
-          color="#ff9800">
-        </a-box>
-
-
-        <a-box
-          position="0 0.08 0.65"
-          depth="0.35"
-          height="0.35"
-          width="0.08"
-          color="#ef6c00">
-        </a-box>
-
-
-        <a-box
-          position="0 0 0.65"
-          depth="0.2"
-          height="0.05"
-          width="0.65"
-          color="#ef6c00">
-        </a-box>
-
-
-        <a-cone
-          position="0 0 -0.9"
-          rotation="90 0 0"
-          radius-bottom="0.15"
-          radius-top="0"
-          height="0.35"
-          color="#ffffff">
-        </a-cone>
-
-      </a-entity>
-
-
-
-      <!-- =====================================
-           เครื่องบินลำที่ 5
-      ====================================== -->
-
-      <a-entity
-
-        id="plane5"
-
-        position="0 1.13 0"
-
-        scale="0.18 0.18 0.18"
-      >
-
-        <a-box
-          depth="1.6"
-          height="0.18"
-          width="0.22"
-          color="#eeeeee">
-        </a-box>
-
-
-        <a-box
-          depth="0.25"
-          height="0.08"
-          width="1.8"
-          color="#9c27b0">
-        </a-box>
-
-
-        <a-box
-          position="0 0.08 0.65"
-          depth="0.35"
-          height="0.35"
-          width="0.08"
-          color="#7b1fa2">
-        </a-box>
-
-
-        <a-box
-          position="0 0 0.65"
-          depth="0.2"
-          height="0.05"
-          width="0.65"
-          color="#7b1fa2">
-        </a-box>
-
-
-        <a-cone
-          position="0 0 -0.9"
-          rotation="90 0 0"
-          radius-bottom="0.15"
-          radius-top="0"
-          height="0.35"
-          color="#ffffff">
-        </a-cone>
-
-      </a-entity>
-
-
-
-      <!-- =====================================
-           เครื่องบินลำที่ 6
-      ====================================== -->
-
-      <a-entity
-
-        id="plane6"
-
-        position="0 1.25 0"
-
-        scale="0.17 0.17 0.17"
-      >
-
-        <a-box
-          depth="1.6"
-          height="0.18"
-          width="0.22"
-          color="#eeeeee">
-        </a-box>
-
-
-        <a-box
-          depth="0.25"
-          height="0.08"
-          width="1.8"
-          color="#00bcd4">
-        </a-box>
-
-
-        <a-box
-          position="0 0.08 0.65"
-          depth="0.35"
-          height="0.35"
-          width="0.08"
-          color="#00838f">
-        </a-box>
-
-
-        <a-box
-          position="0 0 0.65"
-          depth="0.2"
-          height="0.05"
-          width="0.65"
-          color="#00838f">
-        </a-box>
-
-
-        <a-cone
-          position="0 0 -0.9"
-          rotation="90 0 0"
-          radius-bottom="0.15"
-          radius-top="0"
-          height="0.35"
-          color="#ffffff">
-        </a-cone>
-
-      </a-entity>
-
-
-
-      <!-- =====================================
-           เครื่องบินลำที่ 7
-      ====================================== -->
-
-      <a-entity
-
-        id="plane7"
-
-        position="0 1.37 0"
-
-        scale="0.16 0.16 0.16"
-      >
-
-        <a-box
-          depth="1.6"
-          height="0.18"
-          width="0.22"
-          color="#eeeeee">
-        </a-box>
-
-
-        <a-box
-          depth="0.25"
-          height="0.08"
-          width="1.8"
-          color="#795548">
-        </a-box>
-
-
-        <a-box
-          position="0 0.08 0.65"
-          depth="0.35"
-          height="0.35"
-          width="0.08"
-          color="#5d4037">
-        </a-box>
-
-
-        <a-box
-          position="0 0 0.65"
-          depth="0.2"
-          height="0.05"
-          width="0.65"
-          color="#5d4037">
-        </a-box>
-
-
-        <a-cone
-          position="0 0 -0.9"
-          rotation="90 0 0"
-          radius-bottom="0.15"
-          radius-top="0"
-          height="0.35"
-          color="#ffffff">
-        </a-cone>
-
-      </a-entity>
-
-
-
-      <!-- =====================================
-           เครื่องบินลำที่ 8
-      ====================================== -->
-
-      <a-entity
-
-        id="plane8"
-
-        position="0 1.49 0"
-
-        scale="0.15 0.15 0.15"
-      >
-
-        <a-box
-          depth="1.6"
-          height="0.18"
-          width="0.22"
-          color="#eeeeee">
-        </a-box>
-
-
-        <a-box
-          depth="0.25"
-          height="0.08"
-          width="1.8"
-          color="#607d8b">
-        </a-box>
-
-
-        <a-box
-          position="0 0.08 0.65"
-          depth="0.35"
-          height="0.35"
-          width="0.08"
-          color="#455a64">
-        </a-box>
-
-
-        <a-box
-          position="0 0 0.65"
-          depth="0.2"
-          height="0.05"
-          width="0.65"
-          color="#455a64">
-        </a-box>
-
-
-        <a-cone
-          position="0 0 -0.9"
-          rotation="90 0 0"
-          radius-bottom="0.15"
-          radius-top="0"
-          height="0.35"
-          color="#ffffff">
-        </a-cone>
-
-      </a-entity>
-
-
-    </a-marker>
-
-
-    <!-- =========================================
-         CAMERA
-    ========================================== -->
-
-    <a-entity camera></a-entity>
-
-  </a-scene>
-
-
-
-  <script>
-
-    // =========================================
-    // สถานะการบิน
-    // =========================================
-
-    let speed = 1;
-
-    let time = 0;
-
-    // เวลาสำหรับการควงสว่าน แยกจาก time หลัก
-    // เพื่อให้หมุนได้ต่อเนื่องด้วยความเร็วของตัวเอง
-    let rollTime = 0;
-
-    // true = กำลังบิน, false = หยุดนิ่ง (แช่ตำแหน่งปัจจุบัน)
-    let isFlying = true;
-
-    // true = กำลังหมุนควงสว่าน (barrel roll) รอบแกนลำตัวเครื่องบิน
-    let isBarrelRolling = false;
-
-
-
-    // =========================================
-    // เครื่องบินทั้ง 8 ลำ
-    // =========================================
-
-    const planes = [
-
-      document.querySelector("#plane1"),
-
-      document.querySelector("#plane2"),
-
-      document.querySelector("#plane3"),
-
-      document.querySelector("#plane4"),
-
-      document.querySelector("#plane5"),
-
-      document.querySelector("#plane6"),
-
-      document.querySelector("#plane7"),
-
-      document.querySelector("#plane8")
-
-    ];
-
-
-
-    const speedText =
-      document.querySelector("#speedText");
-
-
-    const speedButton =
-      document.querySelector("#speedButton");
-
-
-    const stopButton =
-      document.querySelector("#stopButton");
-
-
-    const barrelButton =
-      document.querySelector("#barrelButton");
-
-
-
-    // =========================================
-    // ปุ่มเพิ่มความเร็ว
-    // =========================================
-
-    speedButton.addEventListener(
-      "click",
-      function () {
-
-        speed += 0.5;
-
-
-        if (speed > 5) {
-
-          speed = 1;
-
-        }
-
-
-        updateSpeedText();
-
-      }
-    );
-
-
-
-    // =========================================
-    // ปุ่มหยุดบิน / บินต่อ
-    // =========================================
-
-    stopButton.addEventListener(
-      "click",
-      function () {
-
-        isFlying = !isFlying;
-
-        stopButton.textContent =
-          isFlying
-            ? "⏸️ หยุดบิน"
-            : "▶️ บินต่อ";
-
-        stopButton.classList.toggle(
-          "active",
-          !isFlying
-        );
-
-        updateSpeedText();
-
-      }
-    );
-
-
-
-    // =========================================
-    // ปุ่มหมุนควงสว่าน
-    // =========================================
-
-    barrelButton.addEventListener(
-      "click",
-      function () {
-
-        isBarrelRolling = !isBarrelRolling;
-
-        barrelButton.classList.toggle(
-          "active",
-          isBarrelRolling
-        );
-
-        updateSpeedText();
-
-      }
-    );
-
-
-
-    // =========================================
-    // อัปเดตข้อความสถานะด้านบน
-    // =========================================
-
-    function updateSpeedText() {
-
-      let status = "ความเร็ว: " + speed.toFixed(1) + "x";
-
-      if (!isFlying) {
-        status += " • หยุดนิ่ง";
-      }
-
-      if (isBarrelRolling) {
-        status += " • 🌀 ควงสว่าน";
-      }
-
-      speedText.innerText = status;
-
+  <div class="card">
+    <h2>2. เลือกค่าฐานสำหรับคำนวณเปอร์เซ็นต์</h2>
+    <select id="base">
+      <option value="118800">1 — 118,800</option>
+      <option value="79200">2 — 79,200</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <h2>3. ค่าที่อ่านได้</h2>
+    <div class="values">
+      <div class="value">
+        <div class="label">ครั้งที่ 1 — ค่ามาก</div>
+        <div class="num" id="high">—</div>
+      </div>
+      <div class="value">
+        <div class="label">ครั้งที่ 2 — ค่าน้อย</div>
+        <div class="num" id="low">—</div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button id="resetBtn" class="secondary">เริ่มใหม่</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>4. ผลลัพธ์</h2>
+    <div class="result">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <small>ผลการผลิต (kW)</small>
+        <button class="copy-btn" data-copy="difference">Copy</button>
+      </div>
+      <div class="big" id="difference">—</div>
+      <div class="formula" id="formula">ยังไม่มีข้อมูล</div>
+    </div>
+    <div class="result" style="margin-top:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <small>เปอร์เซ็นต์</small>
+        <button class="copy-btn" data-copy="percent">Copy</button>
+      </div>
+      <div class="big" id="percent">—</div>
+    </div>
+  </div>
+
+  <div class="card note">
+    <b>หมายเหตุ:</b> โปรแกรมใช้ OCR อ่านตัวเลขจากภาพ กล้องจะมีกรอบเฉพาะพื้นที่ที่ต้องการอ่าน
+    เพื่อช่วยลดการอ่านตัวเลขอื่นที่อยู่นอกกรอบ ควรให้ตัวเลขชัด สว่าง และอยู่ภายในกรอบ
+    การใช้งานกล้องต้องเปิดผ่าน HTTPS หรือ localhost ในเบราว์เซอร์ที่อนุญาตการใช้กล้อง
+  </div>
+</div>
+
+<script>
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const startBtn = document.getElementById('startBtn');
+const captureBtn = document.getElementById('captureBtn');
+const switchBtn = document.getElementById('switchBtn');
+const statusEl = document.getElementById('status');
+const highEl = document.getElementById('high');
+const lowEl = document.getElementById('low');
+const diffEl = document.getElementById('difference');
+const percentEl = document.getElementById('percent');
+const formulaEl = document.getElementById('formula');
+const baseEl = document.getElementById('base');
+const resetBtn = document.getElementById('resetBtn');
+
+let stream = null;
+let facing = 'environment';
+let shot = 0;
+let high = null;
+let low = null;
+let worker = null;
+
+function setStatus(t){ statusEl.textContent=t; }
+
+async function startCamera(){
+  try{
+    if(stream) stream.getTracks().forEach(t=>t.stop());
+    stream = await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:720}},
+      audio:false
+    });
+    video.srcObject=stream;
+    await video.play();
+    captureBtn.disabled=false;
+    switchBtn.disabled=false;
+    setStatus('พร้อมถ่าย — จัดตัวเลขให้อยู่ในกรอบ แล้วกด “ถ่ายรูป”');
+  }catch(e){
+    setStatus('ไม่สามารถเปิดกล้องได้: '+e.message);
+  }
+}
+
+async function getWorker(){
+  if(worker) return worker;
+  setStatus('กำลังเตรียมระบบอ่านตัวเลขครั้งแรก...');
+  worker = await Tesseract.createWorker('eng');
+  await worker.setParameters({
+    tessedit_char_whitelist:'0123456789,.-',
+    tessedit_pageseg_mode:'7'
+  });
+  return worker;
+}
+
+function cleanNumber(text){
+  // Keep digits only; this prevents OCR punctuation from becoming part of the value.
+  const digits = (text||'').replace(/[^\d]/g,'');
+  return digits ? parseInt(digits,10) : null;
+}
+
+async function captureAndRead(){
+  if(!video.videoWidth) return;
+  captureBtn.disabled=true;
+  try{
+    // Crop exactly to the visual guide region: X remains wide, Y is reduced to about 1/3 of the previous height.
+    const vw=video.videoWidth, vh=video.videoHeight;
+    const sx=Math.round(vw*0.08), sy=Math.round(vh*0.4267);
+    const sw=Math.round(vw*0.84), sh=Math.round(vh*0.1466);
+    canvas.width=sw; canvas.height=sh;
+    const ctx=canvas.getContext('2d');
+    ctx.drawImage(video,sx,sy,sw,sh,0,0,sw,sh);
+
+    setStatus('กำลังอ่านตัวเลขจากภาพ...');
+    const w=await getWorker();
+    const result=await w.recognize(canvas);
+    const value=cleanNumber(result.data.text);
+
+    if(value===null){
+      setStatus('อ่านตัวเลขไม่สำเร็จ กรุณาถ่ายใหม่ให้ตัวเลขชัดและอยู่ในกรอบ');
+      return;
     }
 
-
-
-    // =========================================
-    // ฟังก์ชันเส้นทางเลข 8
-    // =========================================
-
-    function figureEight(
-      t,
-      phase,
-      radiusX,
-      radiusZ
-    ) {
-
-      const x =
-        radiusX *
-        Math.sin(t + phase);
-
-
-      const z =
-        radiusZ *
-        Math.sin(t + phase) *
-        Math.cos(t + phase);
-
-
-      return {
-
-        x: x,
-
-        z: z
-
-      };
-
+    shot++;
+    if(shot===1){
+      high=value;
+      highEl.textContent=value.toLocaleString('en-US');
+      setStatus('บันทึกค่ามากแล้ว → กรุณาถ่ายครั้งที่ 2 เป็นค่าน้อย');
+    }else{
+      low=value;
+      lowEl.textContent=value.toLocaleString('en-US');
+      if(high < low){
+        [high,low]=[low,high];
+        highEl.textContent=high.toLocaleString('en-US');
+        lowEl.textContent=low.toLocaleString('en-US');
+        setStatus('ตรวจพบว่าค่าครั้งที่ 2 มากกว่า ระบบสลับให้ค่ามากอยู่ด้านบนโดยอัตโนมัติ');
+      }else{
+        setStatus('อ่านครบ 2 ค่าแล้ว');
+      }
+      calculate();
     }
-
-
-
-    // =========================================
-    // Animation
-    // =========================================
-
-    function animate() {
-
-
-      requestAnimationFrame(
-        animate
-      );
-
-
-      // หยุดอัปเดตตำแหน่ง/การหมุนถ้ากดหยุดบิน
-      // (ยังคง requestAnimationFrame ไว้เพื่อให้กดบินต่อได้ทันที)
-      if (!isFlying) {
-        return;
-      }
-
-
-      time +=
-        0.015 *
-        speed;
-
-
-      // ควงสว่านหมุนเร็วกว่าการเอียงปกติ และเดินตามความเร็วที่เลือกด้วย
-      if (isBarrelRolling) {
-        rollTime += 0.12 * speed;
-      }
-
-
-
-      planes.forEach(
-        function (
-          plane,
-          index
-        ) {
-
-
-          // ===================================
-          // 8 ลำ
-          // กระจายทุก 45 องศา
-          // ===================================
-
-          const phase =
-            index *
-            (
-              Math.PI * 2 / 8
-            );
-
-
-
-          // ===================================
-          // ขนาดวงบิน
-          // แคบกว่าของเดิม
-          // ===================================
-
-          const pos =
-            figureEight(
-
-              time,
-
-              phase,
-
-              1.10,
-
-              1.00
-
-            );
-
-
-
-          // ===================================
-          // ความสูง
-          // ===================================
-
-          const height =
-
-            0.65 +
-
-            index * 0.12 +
-
-            Math.sin(
-              time * 2 +
-              phase
-            ) * 0.08;
-
-
-
-          // ===================================
-          // ตำแหน่ง
-          // ===================================
-
-          plane.object3D.position.x =
-            pos.x;
-
-
-          plane.object3D.position.y =
-            height;
-
-
-          plane.object3D.position.z =
-            pos.z;
-
-
-
-          // ===================================
-          // คำนวณทิศทาง
-          // ===================================
-
-          const nextT =
-            time + 0.01;
-
-
-
-          const next =
-            figureEight(
-
-              nextT,
-
-              phase,
-
-              1.10,
-
-              1.00
-
-            );
-
-
-
-          const dx =
-            next.x -
-            pos.x;
-
-
-          const dz =
-            next.z -
-            pos.z;
-
-
-
-          const angle =
-            Math.atan2(
-              dx,
-              dz
-            );
-
-
-
-          // ===================================
-          // หมุนเครื่องบิน (หันหัวตามทิศทาง)
-          // ===================================
-
-          plane.object3D.rotation.y =
-            angle;
-
-
-
-          // ===================================
-          // เอียง / ควงสว่านรอบแกนลำตัว
-          // ===================================
-          // ปกติ: เอียงเล็กน้อยตอนเลี้ยว (banking)
-          // เมื่อกดควงสว่าน: หมุนรอบแกน Z ต่อเนื่องเต็มรอบ
-          //                  (แต่ละลำเหลื่อมเฟสกันตาม phase
-          //                   เพื่อไม่ให้หมุนพร้อมกันดูแข็งเกินไป)
-
-          if (isBarrelRolling) {
-
-            plane.object3D.rotation.z =
-              rollTime + phase;
-
-          } else {
-
-            const banking =
-
-              Math.sin(
-                time +
-                phase
-              ) * 0.25;
-
-
-            plane.object3D.rotation.z =
-              banking;
-
-          }
-
-        }
-      );
-
+  }catch(e){
+    setStatus('เกิดข้อผิดพลาดในการอ่าน: '+e.message);
+  }finally{
+    captureBtn.disabled=false;
+  }
+}
+
+function calculate(){
+  if(high===null || low===null) return;
+  const base=Number(baseEl.value);
+  const diff=high-low;
+  const pct=(diff/base)*100;
+  diffEl.textContent=diff.toLocaleString('en-US');
+  percentEl.textContent=pct.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
+  formulaEl.textContent=`(${high.toLocaleString('en-US')} − ${low.toLocaleString('en-US')}) ÷ ${base.toLocaleString('en-US')} × 100`;
+}
+
+function resetAll(){
+  shot=0; high=null; low=null;
+  highEl.textContent='—'; lowEl.textContent='—';
+  diffEl.textContent='—'; percentEl.textContent='—';
+  formulaEl.textContent='ยังไม่มีข้อมูล';
+  setStatus(stream ? 'พร้อมถ่าย — ครั้งที่ 1 เป็นค่ามาก' : 'กด “เปิดกล้อง” เพื่อเริ่มใช้งาน');
+}
+
+startBtn.addEventListener('click',startCamera);
+switchBtn.addEventListener('click',()=>{facing=facing==='environment'?'user':'environment';startCamera();});
+captureBtn.addEventListener('click',captureAndRead);
+baseEl.addEventListener('change',calculate);
+resetBtn.addEventListener('click',resetAll);
+
+document.querySelectorAll('.copy-btn').forEach(btn=>{
+  btn.addEventListener('click',async()=>{
+    const el=document.getElementById(btn.dataset.copy);
+    const text=el.textContent.trim();
+    if(text==='—') return;
+    try{
+      await navigator.clipboard.writeText(text);
+      const old=btn.textContent;
+      btn.textContent='Copied!';
+      setTimeout(()=>btn.textContent=old,1200);
+    }catch(e){
+      const ta=document.createElement('textarea');
+      ta.value=text; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); ta.remove();
+      btn.textContent='Copied!';
+      setTimeout(()=>btn.textContent='Copy',1200);
     }
+  });
+});
 
-
-
-    // =========================================
-    // เริ่ม Animation
-    // =========================================
-
-    animate();
-
-
-
-    // =========================================
-    // Hiro Marker
-    // =========================================
-
-    const marker =
-      document.querySelector(
-        "#hiroMarker"
-      );
-
-
-
-    marker.addEventListener(
-      "markerFound",
-      function () {
-
-        updateSpeedText();
-
-      }
-    );
-
-
-
-    marker.addEventListener(
-      "markerLost",
-      function () {
-
-        speedText.innerText =
-
-          "ค้นหา Hiro Marker...";
-
-      }
-    );
-
-  </script>
-
-
+window.addEventListener('beforeunload',()=>{
+  if(stream) stream.getTracks().forEach(t=>t.stop());
+  if(worker) worker.terminate();
+});
+</script>
 </body>
 </html>
