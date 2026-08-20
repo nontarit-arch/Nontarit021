@@ -12,7 +12,15 @@
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <style>
-*{box-sizing:border-box} body{margin:0;background:#f4f6f8;color:#17202a;font-family:'Kanit',sans-serif} .app{max-width:760px;margin:auto;padding:22px 16px 40px} .header{text-align:center;margin-bottom:18px} .header h1{font-size:27px;margin:0 0 4px;font-weight:600} .header p{margin:0;color:#6b7280;font-size:14px} .card{background:#fff;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 6px 24px rgba(0,0,0,.07)} .card h2{font-size:18px;margin:0 0 12px} .mode-tabs{display:flex;gap:10px;margin-bottom:15px;background:#e9eef5;padding:5px;border-radius:12px} .mode-btn{flex:1;background:transparent;color:#687386;border:none;padding:10px;border-radius:8px;font-weight:500;font-size:15px;transition:all 0.2s} .mode-btn.active{background:#fff;color:#1677ff;box-shadow:0 2px 8px rgba(0,0,0,.1)} .camera-wrap{position:relative;background:#111;border-radius:15px;overflow:hidden;aspect-ratio:16/10} video{width:100%;height:100%;object-fit:cover;display:block} .guide{position:absolute;left:8%;right:8%;top:42.67%;height:14.66%;border:3px solid #38bdf8;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.43);pointer-events:none} .guide:after{content:'จัดตัวเลขให้อยู่ในกรอบนี้';position:absolute;left:50%;top:-34px;transform:translateX(-50%);white-space:nowrap;background:#38bdf8;color:#062033;padding:3px 12px;border-radius:20px;font-size:13px} .upload-container{display:none;background:#f7f9fb;border:2px dashed #d7dee8;border-radius:15px;padding:20px;text-align:center} .crop-wrapper{display:none;margin-top:15px;max-height:400px;border-radius:10px;overflow:hidden;background:#111} #imageToCrop{display:block;max-width:100%} input[type="file"]{display:none} .custom-file-upload{display:inline-block;background:#1677ff;color:#fff;padding:12px 20px;border-radius:11px;cursor:pointer;font-weight:500;font-size:15px} .custom-file-upload:hover{background:#0e65e5} .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px} button,select,input{font-family:inherit;border-radius:11px;padding:12px 15px;font-size:15px} .capture-large{font-size:19px!important;padding:17px 30px!important;min-width:190px;box-shadow:0 5px 14px rgba(15,157,115,.25)} .upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px} .upload-box{background:#f7f9fb;border:1px solid #e1e7ef;border-radius:13px;padding:12px} .upload-title{font-size:14px;font-weight:500;margin-bottom:8px} .manual-input{width:100%;border:1px solid #d7dee8;border-radius:10px;padding:12px;font:inherit;font-size:18px;letter-spacing:2px;margin-bottom:8px;background:#fff} .upload-btn{width:100%;font-size:14px} @media(max-width:520px){.upload-grid{grid-template-columns:1fr}.capture-large{width:100%;font-size:20px!important;padding:18px!important}} button{cursor:pointer;background:#1677ff;color:#fff;font-weight:500;border:none} button.secondary{background:#e9eef5;color:#243447} button.success{background:#0f9d73} button.danger{background:#ff4d4f;color:#fff;} button:disabled{opacity:.5;cursor:not-allowed} .copy-btn{background:#fff;color:#17202a;padding:7px 12px;font-size:13px;border-radius:8px;font-weight:500;border:1px solid #d7dee8} .copy-btn:hover{background:#eef2f7} select{background:#eef2f7;width:100%;color:#17202a;border:none} .status{font-size:13px;color:#687386;margin-top:15px;min-height:20px;background:#fffbe6;padding:10px;border-radius:8px;border:1px solid #ffe58f; font-weight: 500;} .values{display:grid;grid-template-columns:1fr 1fr;gap:12px} .value{background:#f7f9fb;border-radius:13px;padding:14px; border: 2px solid transparent; transition: all 0.3s;} .value.active-target{border: 2px solid #1677ff; background: #ebf3ff;} .label{font-size:13px;color:#707b8c}.num{font-size:29px;font-weight:600;margin-top:2px;word-break:break-all} .result{background:#101828;color:#fff;border-radius:15px;padding:18px} .result .big{font-size:20px;font-weight:500;line-height:1.6;white-space:pre-wrap;font-family:inherit;} .result small{color:#b8c1ce} .formula{margin-top:9px;color:#d5dbe3;font-size:14px} 
+*{box-sizing:border-box} body{margin:0;background:#f4f6f8;color:#17202a;font-family:'Kanit',sans-serif} .app{max-width:760px;margin:auto;padding:22px 16px 40px} .header{text-align:center;margin-bottom:18px} .header h1{font-size:27px;margin:0 0 4px;font-weight:600} .header p{margin:0;color:#6b7280;font-size:14px} .card{background:#fff;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 6px 24px rgba(0,0,0,.07)} .card h2{font-size:18px;margin:0 0 12px} .mode-tabs{display:flex;gap:10px;margin-bottom:15px;background:#e9eef5;padding:5px;border-radius:12px} .mode-btn{flex:1;background:transparent;color:#687386;border:none;padding:10px;border-radius:8px;font-weight:500;font-size:15px;transition:all 0.2s} .mode-btn.active{background:#fff;color:#1677ff;box-shadow:0 2px 8px rgba(0,0,0,.1)} .camera-wrap{position:relative;background:#111;border-radius:15px;overflow:hidden;aspect-ratio:16/10} video{width:100%;height:100%;object-fit:cover;display:block} 
+
+/* ----------------------------------------------------------- */
+/* อัปเดตขนาด .guide ตรงนี้: ปรับ top เป็น 39% และ height เป็น 22% */
+/* ----------------------------------------------------------- */
+.guide{position:absolute;left:8%;right:8%;top:39%;height:22%;border:3px solid #38bdf8;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.43);pointer-events:none} 
+.guide:after{content:'จัดตัวเลขให้อยู่ในกรอบนี้';position:absolute;left:50%;top:-34px;transform:translateX(-50%);white-space:nowrap;background:#38bdf8;color:#062033;padding:3px 12px;border-radius:20px;font-size:13px} 
+
+.upload-container{display:none;background:#f7f9fb;border:2px dashed #d7dee8;border-radius:15px;padding:20px;text-align:center} .crop-wrapper{display:none;margin-top:15px;max-height:400px;border-radius:10px;overflow:hidden;background:#111} #imageToCrop{display:block;max-width:100%} input[type="file"]{display:none} .custom-file-upload{display:inline-block;background:#1677ff;color:#fff;padding:12px 20px;border-radius:11px;cursor:pointer;font-weight:500;font-size:15px} .custom-file-upload:hover{background:#0e65e5} .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px} button,select,input{font-family:inherit;border-radius:11px;padding:12px 15px;font-size:15px} .capture-large{font-size:19px!important;padding:17px 30px!important;min-width:190px;box-shadow:0 5px 14px rgba(15,157,115,.25)} .upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px} .upload-box{background:#f7f9fb;border:1px solid #e1e7ef;border-radius:13px;padding:12px} .upload-title{font-size:14px;font-weight:500;margin-bottom:8px} .manual-input{width:100%;border:1px solid #d7dee8;border-radius:10px;padding:12px;font:inherit;font-size:18px;letter-spacing:2px;margin-bottom:8px;background:#fff} .upload-btn{width:100%;font-size:14px} @media(max-width:520px){.upload-grid{grid-template-columns:1fr}.capture-large{width:100%;font-size:20px!important;padding:18px!important}} button{cursor:pointer;background:#1677ff;color:#fff;font-weight:500;border:none} button.secondary{background:#e9eef5;color:#243447} button.success{background:#0f9d73} button.danger{background:#ff4d4f;color:#fff;} button:disabled{opacity:.5;cursor:not-allowed} .copy-btn{background:#fff;color:#17202a;padding:7px 12px;font-size:13px;border-radius:8px;font-weight:500;border:1px solid #d7dee8} .copy-btn:hover{background:#eef2f7} select{background:#eef2f7;width:100%;color:#17202a;border:none} .status{font-size:13px;color:#687386;margin-top:15px;min-height:20px;background:#fffbe6;padding:10px;border-radius:8px;border:1px solid #ffe58f; font-weight: 500;} .values{display:grid;grid-template-columns:1fr 1fr;gap:12px} .value{background:#f7f9fb;border-radius:13px;padding:14px; border: 2px solid transparent; transition: all 0.3s;} .value.active-target{border: 2px solid #1677ff; background: #ebf3ff;} .label{font-size:13px;color:#707b8c}.num{font-size:29px;font-weight:600;margin-top:2px;word-break:break-all} .result{background:#101828;color:#fff;border-radius:15px;padding:18px} .result .big{font-size:20px;font-weight:500;line-height:1.6;white-space:pre-wrap;font-family:inherit;} .result small{color:#b8c1ce} .formula{margin-top:9px;color:#d5dbe3;font-size:14px} 
 .zoom-wrap{display:none; align-items:center; gap:10px; margin-top:12px; background:#111; color:#fff; padding:10px 15px; border-radius:10px; font-size:14px;} .zoom-wrap input{flex:1; margin:0; cursor:pointer;}
 .preview-img{width:100%; max-height:80px; object-fit:contain; background:#111; border-radius:8px; margin-top:10px; display:none;}
 .retake-btn{width:100%; font-size:13px; padding:8px; margin-top:10px; display:none;}
@@ -20,6 +28,7 @@
 </style>
 </head>
 <body>
+<!-- โครงสร้างและ Script เหมือนเดิมทั้งหมด -->
 <div class="app">
   <div class="header">
     <h1>ระบบรายงานผลผลิตโรงงาน</h1>
@@ -145,8 +154,6 @@ const startBtn = document.getElementById('startBtn');
 const captureBtn = document.getElementById('captureBtn');
 const switchBtn = document.getElementById('switchBtn');
 const statusEl = document.getElementById('status');
-
-// ตัวแปร UI ของค่าผลลัพธ์
 const highEl = document.getElementById('high');
 const lowEl = document.getElementById('low');
 const boxHigh = document.getElementById('boxHigh');
@@ -155,10 +162,8 @@ const highImg = document.getElementById('highImg');
 const lowImg = document.getElementById('lowImg');
 const retakeHighBtn = document.getElementById('retakeHighBtn');
 const retakeLowBtn = document.getElementById('retakeLowBtn');
-
 const zoomWrap = document.getElementById('zoomWrap');
 const zoomSlider = document.getElementById('zoomSlider');
-
 const reportOutput = document.getElementById('reportOutput');
 const formulaEl = document.getElementById('formula');
 const baseEl = document.getElementById('base');
@@ -169,7 +174,6 @@ const highManual = document.getElementById('highManual');
 const lowManual = document.getElementById('lowManual');
 const highManualBtn = document.getElementById('highManualBtn');
 const lowManualBtn = document.getElementById('lowManualBtn');
-
 const modeCameraBtn = document.getElementById('modeCameraBtn');
 const modeUploadBtn = document.getElementById('modeUploadBtn');
 const cameraSection = document.getElementById('cameraSection');
@@ -182,7 +186,7 @@ const readCropBtn = document.getElementById('readCropBtn');
 
 let stream = null;
 let facing = 'environment';
-let activeTarget = 'high'; // 'high' หรือ 'low' เพื่อบอกว่ากำลังถ่ายชุดไหน
+let activeTarget = 'high'; 
 let high = null;
 let low = null;
 let worker = null;
@@ -191,7 +195,6 @@ let videoTrack = null;
 
 function setStatus(t){ statusEl.textContent = t; }
 
-// จัดการการเลือกเป้าหมาย (ชุด 1 หรือ 2)
 function updateTargetUI() {
   boxHigh.classList.remove('active-target');
   boxLow.classList.remove('active-target');
@@ -207,7 +210,6 @@ function updateTargetUI() {
   }
 }
 
-// ปุ่มถ่ายใหม่ (Retake)
 retakeHighBtn.addEventListener('click', () => {
   high = null; highEl.textContent = '—';
   highImg.style.display = 'none'; retakeHighBtn.style.display = 'none';
@@ -256,7 +258,7 @@ readCropBtn.addEventListener('click', async () => {
   try {
     readCropBtn.disabled = true; readCropBtn.textContent = 'กำลังประมวลผล...';
     const croppedCanvas = cropper.getCroppedCanvas();
-    const dataUrl = croppedCanvas.toDataURL('image/jpeg'); // บันทึกรูปไว้โชว์
+    const dataUrl = croppedCanvas.toDataURL('image/jpeg'); 
     
     setStatus(`ระบบกำลังสแกนตัวเลข... (ใช้เวลาสักครู่)`);
     const value = await recognizeCanvas(croppedCanvas);
@@ -285,7 +287,6 @@ async function startCamera(){
     });
     video.srcObject=stream; await video.play();
     
-    // ตั้งค่าฟังก์ชัน Zoom
     videoTrack = stream.getVideoTracks()[0];
     const capabilities = videoTrack.getCapabilities();
     if(capabilities.zoom) {
@@ -327,7 +328,7 @@ async function captureAndRead(){
     canvas.width = sw; canvas.height = sh;
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
-    const dataUrl = canvas.toDataURL('image/jpeg'); // บันทึกรูปที่ตัดออกมา
+    const dataUrl = canvas.toDataURL('image/jpeg'); 
 
     setStatus(`ระบบกำลังสแกนตัวเลขจากภาพ...`);
     const value = await recognizeCanvas(canvas);
@@ -399,7 +400,6 @@ async function recognizeCanvas(sourceCanvas){
   return value;
 }
 
-// ฟังก์ชันหลักเวลาอ่านค่าหรือกรอกสำเร็จ
 function processReadValue(value, dataUrl = null){
   if (activeTarget === 'high') {
     high = value;
@@ -407,7 +407,6 @@ function processReadValue(value, dataUrl = null){
     if(dataUrl) { highImg.src = dataUrl; highImg.style.display = 'block'; }
     retakeHighBtn.style.display = 'block';
     
-    // ย้ายเป้าหมายไปค่าน้อย (ถ้าค่าน้อยยังว่าง)
     activeTarget = (low === null) ? 'low' : null;
     
   } else if (activeTarget === 'low') {
@@ -416,7 +415,6 @@ function processReadValue(value, dataUrl = null){
     if(dataUrl) { lowImg.src = dataUrl; lowImg.style.display = 'block'; }
     retakeLowBtn.style.display = 'block';
     
-    // ย้ายเป้าหมายไปค่ามาก (ถ้าค่ามากถูกลบและยังว่าง)
     activeTarget = (high === null) ? 'high' : null;
   }
   
@@ -496,10 +494,9 @@ function saveManualValue(type){
   const value = cleanNumber(input.value);
   if(value===null){ setStatus('กรุณากรอกตัวเลขให้ถูกต้อง'); input.focus(); return; }
   
-  // บังคับให้ activeTarget เปลี่ยนเป็นประเภทที่กำลังกรอก เพื่อให้ processReadValue ทำงานถูกช่อง
   activeTarget = type; 
   processReadValue(value, null); 
-  input.value = ''; // ล้างช่องกรอก
+  input.value = ''; 
 }
 
 highManualBtn.addEventListener('click',()=>saveManualValue('high'));
