@@ -27,6 +27,7 @@ body{margin:0;background:#f4f6f8;color:#17202a;font-family:'Kanit',sans-serif}
 
 .camera-wrap{position:relative;background:#111;border-radius:15px;overflow:hidden;aspect-ratio:16/10}
 video{width:100%;height:100%;object-fit:cover;display:block}
+/* ปรับขนาดความสูงกรอบและตำแหน่งกึ่งกลาง */
 .guide{position:absolute;left:8%;right:8%;top:39%;height:22%;border:3px solid #38bdf8;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.43);pointer-events:none}
 .guide:after{content:'จัดตัวเลขให้อยู่ในกรอบนี้';position:absolute;left:50%;top:-34px;transform:translateX(-50%);white-space:nowrap;background:#38bdf8;color:#062033;padding:3px 12px;border-radius:20px;font-size:13px}
 
@@ -83,6 +84,16 @@ select{background:#eef2f7;width:100%;color:#17202a;border:none}
         <video id="video" autoplay playsinline muted></video>
         <div class="guide"></div>
       </div>
+      
+      <!-- แถบซูม -->
+      <div id="zoomContainer" style="display:none; margin: 12px 0; background: #fff; padding: 10px 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+        <label for="zoomSlider" style="font-size: 14px; color: #687386; display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span>🔍 ซูม (Zoom)</span>
+          <strong id="zoomValueDisplay" style="color: #1677ff;">1.0x</strong>
+        </label>
+        <input type="range" id="zoomSlider" min="1" max="3" step="0.1" value="1" style="width: 100%; margin: 0;">
+      </div>
+
       <div class="row">
         <button id="startBtn">เปิดกล้อง</button>
         <button id="captureBtn" class="success capture-large" disabled>📷 ถ่ายรูป</button>
@@ -149,10 +160,12 @@ select{background:#eef2f7;width:100%;color:#17202a;border:none}
       <div class="value">
         <div class="label">ชุดข้อมูลครั้งที่ 1 — ค่ามาก</div>
         <div class="num" id="high">—</div>
+        <button id="retakeHighBtn" class="secondary" style="width: 100%; margin-top: 10px; font-size: 13px; padding: 6px; display: none;">🔄 ถ่ายหรือกรอกใหม่</button>
       </div>
       <div class="value">
         <div class="label">ชุดข้อมูลครั้งที่ 2 — ค่าน้อย</div>
         <div class="num" id="low">—</div>
+        <button id="retakeLowBtn" class="secondary" style="width: 100%; margin-top: 10px; font-size: 13px; padding: 6px; display: none;">🔄 ถ่ายหรือกรอกใหม่</button>
       </div>
     </div>
     <div class="row">
@@ -208,7 +221,8 @@ const readCropBtn = document.getElementById('readCropBtn');
 
 let stream = null;
 let facing = 'environment';
-let shot = 0;
+let currentTarget = 'high'; // กำหนดเป้าหมายข้อมูล ('high' หรือ 'low')
+let videoTrack = null;
 let high = null;
 let low = null;
 let worker = null;
@@ -266,8 +280,8 @@ fileInput.addEventListener('change', (e) => {
 
 readCropBtn.addEventListener('click', async () => {
   if(!cropper) return;
-  if(high!==null && low!==null){
-    setStatus('มีข้อมูลครบ 2 ชุดแล้ว — กด “เริ่มใหม่” เพื่อเริ่มใหม่');
+  if(!currentTarget){
+    setStatus('มีข้อมูลครบแล้ว กรุณากด "ถ่ายหรือกรอกใหม่" ใต้ชุดข้อมูลที่ต้องการแก้');
     return;
   }
 
@@ -307,9 +321,35 @@ async function startCamera(){
     });
     video.srcObject=stream;
     await video.play();
-    captureBtn.disabled=false;
+    captureBtn.disabled = !currentTarget;
     switchBtn.disabled=false;
-    setStatus('พร้อมถ่าย — จัดให้อยู่ในกรอบ แล้วกด “ถ่ายรูป”');
+    
+    // ตั้งค่าซูมกล้อง
+    videoTrack = stream.getVideoTracks()[0];
+    const capabilities = videoTrack.getCapabilities();
+    const zoomContainer = document.getElementById('zoomContainer');
+    const zoomSlider = document.getElementById('zoomSlider');
+    const zoomValueDisplay = document.getElementById('zoomValueDisplay');
+    
+    if (capabilities.zoom) {
+      zoomContainer.style.display = 'block';
+      zoomSlider.min = capabilities.zoom.min;
+      zoomSlider.max = capabilities.zoom.max;
+      zoomSlider.step = capabilities.zoom.step;
+      zoomSlider.value = videoTrack.getSettings().zoom || capabilities.zoom.min;
+      zoomValueDisplay.textContent = Number(zoomSlider.value).toFixed(1) + 'x';
+      
+      zoomSlider.oninput = async () => {
+        try {
+          await videoTrack.applyConstraints({ advanced: [ { zoom: zoomSlider.value } ] });
+          zoomValueDisplay.textContent = Number(zoomSlider.value).toFixed(1) + 'x';
+        } catch(e) { console.warn('Zoom failed', e); }
+      };
+    } else {
+      zoomContainer.style.display = 'none';
+    }
+
+    setStatus(`พร้อมใช้งาน — กำลังเล็ง: ${currentTarget === 'high' ? 'ชุดที่ 1 (ค่ามาก)' : (currentTarget === 'low' ? 'ชุดที่ 2 (ค่าน้อย)' : 'ครบแล้ว')}`);
   }catch(e){
     setStatus('ไม่สามารถเปิดกล้องได้: '+e.message);
   }
@@ -317,7 +357,7 @@ async function startCamera(){
 
 async function captureAndRead(){
   if(!video.videoWidth) return;
-  if(high!==null && low!==null){ setStatus('มีข้อมูลครบแล้ว'); return; }
+  if(!currentTarget){ setStatus('มีข้อมูลครบแล้ว กรุณากด "ถ่ายหรือกรอกใหม่" ใต้ชุดข้อมูลที่ต้องการแก้'); return; }
 
   captureBtn.disabled=true;
   try{
@@ -347,12 +387,12 @@ async function captureAndRead(){
 
     if(value === null){
       setStatus('AI OCR อ่านไม่สำเร็จ (กรุณาจัดเป้าหมายให้อยู่กลางกรอบ) — ถ่ายใหม่หรือกรอกแทน');
+      captureBtn.disabled=false;
     } else {
       processReadValue(value);
     }
   }catch(e){
     setStatus('เกิดข้อผิดพลาดในการอ่าน: '+e.message);
-  }finally{
     captureBtn.disabled=false;
   }
 }
@@ -442,17 +482,33 @@ async function recognizeCanvas(sourceCanvas){
 }
 
 function processReadValue(value){
-  shot++;
-  if(shot === 1){
+  if(currentTarget === 'high'){
     high = value;
     highEl.textContent = value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
-    updateCalculateButton();
-    setStatus(`บันทึกชุดที่ 1 = ${highEl.textContent} แล้ว — เตรียมอ่านครั้งที่ 2 (ค่าน้อย)`);
-  }else{
+    document.getElementById('retakeHighBtn').style.display = 'block';
+    setStatus(`บันทึกชุดที่ 1 = ${highEl.textContent} แล้ว`);
+  }else if(currentTarget === 'low'){
     low = value;
     lowEl.textContent = value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
-    updateCalculateButton();
-    setStatus(`บันทึกชุดที่ 2 = ${lowEl.textContent} แล้ว — กด “คำนวณและสร้างรายงาน”`);
+    document.getElementById('retakeLowBtn').style.display = 'block';
+    setStatus(`บันทึกชุดที่ 2 = ${lowEl.textContent} แล้ว`);
+  }
+  
+  // เช็คว่าต้องไปที่เป้าหมายไหนต่อ
+  if(high === null) currentTarget = 'high';
+  else if(low === null) currentTarget = 'low';
+  else currentTarget = null; 
+
+  updateCalculateButton();
+  
+  if(currentTarget === 'low') {
+    setStatus('บันทึกชุดที่ 1 แล้ว — เตรียมอ่านครั้งที่ 2 (ค่าน้อย)');
+    captureBtn.disabled = false;
+  } else if (!currentTarget) {
+    setStatus('ได้ข้อมูลครบ 2 ชุดแล้ว — กด “คำนวณและสร้างรายงาน” หรือเลือกถ่ายใหม่');
+    captureBtn.disabled = true; // ล็อคปุ่มถ่ายจนกว่าจะกดแก้
+  } else {
+    captureBtn.disabled = false;
   }
 }
 
@@ -466,7 +522,6 @@ function calculate(){
   const diff = high - low;
   const pct = (diff / base) * 100;
   
-  // ดึงวันที่ปัจจุบันในรูปแบบ DD/MM/YYYY (ปี พ.ศ.)
   const now = new Date();
   const day = String(now.getDate()).padStart(2, '0');
   const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -492,8 +547,10 @@ function calculate(){
 }
 
 function resetAll(){
-  shot=0; high=null; low=null;
+  currentTarget = 'high'; high=null; low=null;
   highEl.textContent='—'; lowEl.textContent='—';
+  document.getElementById('retakeHighBtn').style.display = 'none';
+  document.getElementById('retakeLowBtn').style.display = 'none';
   reportOutput.textContent='ยังไม่มีข้อมูลรายงาน';
   formulaEl.textContent='';
   highManual.value=''; lowManual.value='';
@@ -504,8 +561,30 @@ function resetAll(){
   if(cropper){ cropper.destroy(); cropper = null; }
 
   updateCalculateButton();
+  if(stream) captureBtn.disabled = false;
   setStatus('รีเซ็ตข้อมูลแล้ว — เลือกเปิดกล้อง หรืออัปโหลดรูปภาพเพื่อเริ่มใหม่');
 }
+
+// Event ปุ่มแก้ไขชุดข้อมูล
+document.getElementById('retakeHighBtn').addEventListener('click', () => {
+  high = null;
+  highEl.textContent = '—';
+  document.getElementById('retakeHighBtn').style.display = 'none';
+  currentTarget = 'high';
+  updateCalculateButton();
+  setStatus('โหมดแก้ไข: กรุณาถ่ายรูป อัปโหลด หรือกรอกเพื่อบันทึก "ชุดที่ 1" ใหม่');
+  if (stream) captureBtn.disabled = false;
+});
+
+document.getElementById('retakeLowBtn').addEventListener('click', () => {
+  low = null;
+  lowEl.textContent = '—';
+  document.getElementById('retakeLowBtn').style.display = 'none';
+  currentTarget = 'low';
+  updateCalculateButton();
+  setStatus('โหมดแก้ไข: กรุณาถ่ายรูป อัปโหลด หรือกรอกเพื่อบันทึก "ชุดที่ 2" ใหม่');
+  if (stream) captureBtn.disabled = false;
+});
 
 startBtn.addEventListener('click',startCamera);
 switchBtn.addEventListener('click',()=>{facing=facing==='environment'?'user':'environment';startCamera();});
@@ -536,19 +615,27 @@ function saveManualValue(type){
   if(value===null){ setStatus('กรุณากรอกตัวเลขให้ถูกต้อง'); input.focus(); return; }
 
   if(type==='high'){
-    if(high!==null){ setStatus('มีชุดที่ 1 แล้ว'); return; }
     high = value;
     highEl.textContent = value.toLocaleString('en-US');
-    shot = Math.max(shot,1);
+    document.getElementById('retakeHighBtn').style.display = 'block';
     setStatus(`บันทึกชุดที่ 1 (กรอกเอง) = ${highEl.textContent}`);
   }else{
-    if(low!==null){ setStatus('มีชุดที่ 2 แล้ว'); return; }
     low = value;
     lowEl.textContent = value.toLocaleString('en-US');
-    shot = Math.max(shot,2);
+    document.getElementById('retakeLowBtn').style.display = 'block';
     setStatus(`บันทึกชุดที่ 2 (กรอกเอง) = ${lowEl.textContent}`);
   }
+  
+  if(high === null) currentTarget = 'high';
+  else if(low === null) currentTarget = 'low';
+  else currentTarget = null; 
+
   updateCalculateButton();
+  if (!currentTarget) {
+      captureBtn.disabled = true;
+  } else {
+      if(stream) captureBtn.disabled = false;
+  }
 }
 
 highManualBtn.addEventListener('click',()=>saveManualValue('high'));
