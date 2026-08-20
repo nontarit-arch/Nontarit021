@@ -71,12 +71,12 @@ select{background:#eef2f7;min-width:220px;color:#17202a;border:none}
       <div class="upload-box">
         <div class="upload-title">ทางเลือก: กรอกชุดที่ 1 — ค่ามาก</div>
         <input id="highManual" class="manual-input" type="text" inputmode="decimal" placeholder="กรอกตัวเลขเช่น 29148378.0">
-        <button id="highManualBtn" class="secondary upload-btn" type="button">บันทึกชุดข้อมูลที่ 1</button>
+        <button id="highManualBtn" class="secondary upload-btn" type="button">บันทึกชุดที่ 1</button>
       </div>
       <div class="upload-box">
         <div class="upload-title">ทางเลือก: กรอกชุดที่ 2 — ค่าน้อย</div>
         <input id="lowManual" class="manual-input" type="text" inputmode="decimal" placeholder="กรอกตัวเลขเช่น 29131626.0">
-        <button id="lowManualBtn" class="secondary upload-btn" type="button">บันทึกชุดข้อมูลที่ 2</button>
+        <button id="lowManualBtn" class="secondary upload-btn" type="button">บันทึกชุดที่ 2</button>
       </div>
     </div>
     <div id="status" class="status">กด “เปิดกล้อง” เพื่อเริ่มใช้งาน</div>
@@ -176,7 +176,7 @@ async function startCamera(){
     await video.play();
     captureBtn.disabled=false;
     switchBtn.disabled=false;
-    setStatus('พร้อมถ่าย — จัดตัวเลขให้อยู่ในกรอบ (พยายามให้หน้าจอชัดที่สุด) แล้วกด “ถ่ายรูป”');
+    setStatus('พร้อมถ่าย — จัดตัวเลขให้อยู่ในกรอบเป๊ะๆ (จอชัดที่สุด) แล้วกด “ถ่ายรูป”');
   }catch(e){
     setStatus('ไม่สามารถเปิดกล้องได้: '+e.message);
   }
@@ -187,7 +187,6 @@ async function getWorker(){
   setStatus('กำลังเตรียม AI OCR สำหรับอ่านตัวเลขหน้าจอ...');
   worker = await Tesseract.createWorker('eng');
   await worker.setParameters({
-    // เพิ่มจุดและลูกน้ำใน Whitelist เพื่อให้อ่านรูปแบบจอภาพได้
     tessedit_char_whitelist: '0123456789,.',
     tessedit_pageseg_mode: '7' 
   });
@@ -195,15 +194,9 @@ async function getWorker(){
 }
 
 function cleanNumber(text){
-  // ลบทุกอย่างที่ไม่ใช่ตัวเลขและจุดทศนิยมออก
   const cleanedText = (text||'').replace(/[^\d.]/g, '');
-  
-  // นับเฉพาะจำนวนหลักตัวเลข (ไม่นับจุดทศนิยม) เพื่อตรวจสอบความถูกต้อง
   const digitOnly = cleanedText.replace(/\./g, '');
-  
-  // ถ้าตัวเลขบนหน้าจอมี 9 หลักเสมอ (เช่น 29,148,378.0 มีเลข 9 ตัว) 
   if(digitOnly.length !== 9) return null;
-  
   const value = parseFloat(cleanedText);
   if (isNaN(value)) return null;
   return value;
@@ -218,7 +211,6 @@ function preprocessImage(sourceCanvas){
   out.height = h * scale;
   
   const ctx = out.getContext('2d', { willReadFrequently: true });
-  // การเปิด Smoothing ช่วยลดเม็ดพิกเซล (Moiré) บนหน้าจอได้ส่วนหนึ่ง
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(sourceCanvas, 0, 0, out.width, out.height);
@@ -264,12 +256,12 @@ async function recognizeCanvas(sourceCanvas){
   const w = await getWorker();
   const processed = preprocessImage(sourceCanvas);
   
-  // 1. ลองอ่านแบบปกติ (สำหรับบรรทัดพื้นสีเทา ตัวหนังสือดำ)
+  // 1. ลองอ่านแบบปกติ
   let result = await w.recognize(processed);
   let value = cleanNumber(result.data.text);
 
   if(value === null){
-    // 2. ถ้าอ่านไม่ได้ อาจจะถ่ายติดบรรทัดแถบสีฟ้า (ตัวหนังสือขาว) ให้ทำการสลับสี (Invert) 
+    // 2. ถ้าอ่านไม่ได้ ลองสลับสี (Invert) สำหรับบรรทัดที่มีแถบสีทึบ
     const ctx = processed.getContext('2d');
     const imgData = ctx.getImageData(0, 0, processed.width, processed.height);
     const d = imgData.data;
@@ -280,13 +272,12 @@ async function recognizeCanvas(sourceCanvas){
     }
     ctx.putImageData(imgData, 0, 0);
     
-    // ลองให้อ่านใหม่อีกครั้ง
     result = await w.recognize(processed);
     value = cleanNumber(result.data.text);
   }
   
-  // 3. Fallback สุดท้าย นำภาพต้นฉบับมาให้ AI อ่านโดยตรง
   if(value === null){
+    // 3. Fallback ภาพต้นฉบับ
     result = await w.recognize(sourceCanvas);
     value = cleanNumber(result.data.text);
   }
@@ -308,19 +299,39 @@ async function captureAndRead(){
 
   captureBtn.disabled=true;
   try{
-    const vw=video.videoWidth, vh=video.videoHeight;
-    const sx=Math.round(vw*0.08), sy=Math.round(vh*0.4267);
-    const sw=Math.round(vw*0.84), sh=Math.round(vh*0.1466);
-    canvas.width=sw; canvas.height=sh;
+    // คำนวณพิกัดกรอบเจาะจง 100% ตัดปัญหาการอ่านตัวเลขนอกกรอบ
+    const videoRect = video.getBoundingClientRect();
+    const guideRect = document.querySelector('.guide').getBoundingClientRect();
 
-    const ctx=canvas.getContext('2d');
-    ctx.drawImage(video,sx,sy,sw,sh,0,0,sw,sh);
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
 
-    setStatus(`AI OCR กำลังอ่านชุดข้อมูลครั้งที่ ${shot+1} หน้าจอ...`);
-    const value=await recognizeCanvas(canvas);
+    const scale = Math.max(videoRect.width / vw, videoRect.height / vh);
+    const renderedWidth = vw * scale;
+    const renderedHeight = vh * scale;
 
-    if(value===null){
-      setStatus('AI OCR อ่านไม่สำเร็จ (ตรวจสอบแสงสะท้อนหรือการโฟกัส) — ถ่ายใหม่หรือกรอกข้อมูลแทน');
+    const offsetX = (renderedWidth - videoRect.width) / 2;
+    const offsetY = (renderedHeight - videoRect.height) / 2;
+
+    const guideX = guideRect.left - videoRect.left;
+    const guideY = guideRect.top - videoRect.top;
+
+    const sx = (guideX + offsetX) / scale;
+    const sy = (guideY + offsetY) / scale;
+    const sw = guideRect.width / scale;
+    const sh = guideRect.height / scale;
+
+    canvas.width = sw; 
+    canvas.height = sh;
+
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
+
+    setStatus(`AI OCR กำลังอ่านชุดข้อมูลครั้งที่ ${shot+1} เฉพาะในกรอบ...`);
+    const value = await recognizeCanvas(canvas);
+
+    if(value === null){
+      setStatus('AI OCR อ่านไม่สำเร็จ (กรุณาจัดบรรทัดเป้าหมายให้อยู่กลางกรอบ) — ถ่ายใหม่หรือกรอกแทน');
       return;
     }
 
@@ -328,7 +339,6 @@ async function captureAndRead(){
 
     if(shot===1){
       high=value;
-      // จัดรูปแบบตัวเลขให้โชว์จุดทศนิยม
       highEl.textContent=value.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
       updateCalculateButton();
       setStatus(`บันทึกชุดที่ 1 = ${highEl.textContent} แล้ว — ถ่ายครั้งที่ 2 เป็นชุดข้อมูลค่าน้อย`);
@@ -372,7 +382,7 @@ function resetAll(){
   formulaEl.textContent='ยังไม่มีข้อมูล';
   highManual.value=''; lowManual.value='';
   updateCalculateButton();
-  setStatus(stream ? 'พร้อมถ่าย — ครั้งที่ 1 = ชุดข้อมูล 9 ตำแหน่ง (ค่ามาก) หรือกรอกตัวเลขแทน' : 'กด “เปิดกล้อง” เพื่อเริ่มใช้งาน');
+  setStatus(stream ? 'พร้อมถ่าย — จัดให้อยู่ในกรอบ หรือกรอกตัวเลขแทน' : 'กด “เปิดกล้อง” เพื่อเริ่มใช้งาน');
 }
 
 startBtn.addEventListener('click',startCamera);
@@ -441,7 +451,6 @@ function saveManualValue(type){
 highManualBtn.addEventListener('click',()=>saveManualValue('high'));
 lowManualBtn.addEventListener('click',()=>saveManualValue('low'));
 
-// อนุญาตให้พิมพ์จุดทศนิยมได้
 highManual.addEventListener('input',()=>{
   highManual.value=highManual.value.replace(/[^\d.]/g,'');
 });
