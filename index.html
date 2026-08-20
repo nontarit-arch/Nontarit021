@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Screen Number OCR Calculator</title>
+<title>Screen Number OCR Calculator & Report</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -52,13 +52,13 @@ button.success{background:#0f9d73}
 button:disabled{opacity:.5;cursor:not-allowed}
 .copy-btn{background:#fff;color:#17202a;padding:7px 12px;font-size:13px;border-radius:8px;font-weight:500;border:1px solid #d7dee8}
 .copy-btn:hover{background:#eef2f7}
-select{background:#eef2f7;min-width:220px;color:#17202a;border:none}
+select{background:#eef2f7;width:100%;color:#17202a;border:none}
 .status{font-size:13px;color:#687386;margin-top:15px;min-height:20px;background:#fffbe6;padding:10px;border-radius:8px;border:1px solid #ffe58f}
 .values{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .value{background:#f7f9fb;border-radius:13px;padding:14px}
 .label{font-size:13px;color:#707b8c}.num{font-size:29px;font-weight:600;margin-top:2px;word-break:break-all}
 .result{background:#101828;color:#fff;border-radius:15px;padding:18px}
-.result .big{font-size:40px;font-weight:600;line-height:1.1}
+.result .big{font-size:20px;font-weight:500;line-height:1.6;white-space:pre-wrap;font-family:inherit;}
 .result small{color:#b8c1ce}
 .formula{margin-top:9px;color:#d5dbe3;font-size:14px}
 @media(max-width:520px){.values{grid-template-columns:1fr}.header h1{font-size:23px}.guide{left:8%;right:8%}}
@@ -67,8 +67,8 @@ select{background:#eef2f7;min-width:220px;color:#17202a;border:none}
 <body>
 <div class="app">
   <div class="header">
-    <h1>อ่านค่าตัวเลขจากหน้าจอ</h1>
-    <p>ระบบอ่านตัวเลขยืดหยุ่น (รองรับทุกจำนวนหลัก)</p>
+    <h1>ระบบรายงานผลผลิตโรงงาน</h1>
+    <p>อ่านค่าตัวเลขและจัดรูปแบบรายงานอัตโนมัติ</p>
   </div>
 
   <div class="card">
@@ -125,11 +125,22 @@ select{background:#eef2f7;min-width:220px;color:#17202a;border:none}
   </div>
 
   <div class="card">
-    <h2>2. เลือกค่าฐานสำหรับคำนวณเปอร์เซ็นต์</h2>
-    <select id="base">
-      <option value="118800">1 — 118,800</option>
-      <option value="79200">2 — 79,200</option>
-    </select>
+    <h2>2. ตั้งค่าการผลิต</h2>
+    <div style="margin-bottom: 12px;">
+      <label class="label" style="display:block; margin-bottom:5px;">เลือกค่าฐานสำหรับคำนวณ (Max.Capacity)</label>
+      <select id="base">
+        <option value="118800">118,800 kWh.</option>
+        <option value="79200" selected>79,200 kWh.</option>
+      </select>
+    </div>
+    <div>
+      <label class="label" style="display:block; margin-bottom:5px;">เลือกผลัดการทำงาน</label>
+      <select id="shiftSelect">
+        <option value="08:00-16:00น.">ผลัดเช้า (08:00-16:00น.)</option>
+        <option value="16:00-00:00น.">ผลัดบ่าย (16:00-00:00น.)</option>
+        <option value="00:00-08:00น.">ผลัดดึก (00:00-08:00น.)</option>
+      </select>
+    </div>
   </div>
 
   <div class="card">
@@ -150,24 +161,17 @@ select{background:#eef2f7;min-width:220px;color:#17202a;border:none}
   </div>
 
   <div class="card">
-    <h2>4. ผลลัพธ์</h2>
+    <h2>4. ผลลัพธ์ในรูปแบบรายงาน</h2>
     <div class="row" style="margin-bottom:12px">
-      <button id="calculateBtn" class="success" disabled>🧮 คำนวณ</button>
+      <button id="calculateBtn" class="success" disabled>🧮 คำนวณและสร้างรายงาน</button>
     </div>
     <div class="result">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-        <small>ผลการผลิต (kW)</small>
-        <button class="copy-btn" data-copy="difference">Copy</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px">
+        <small>รูปแบบข้อความสำหรับคัดลอก</small>
+        <button class="copy-btn" data-copy="reportOutput">Copy</button>
       </div>
-      <div class="big" id="difference">—</div>
-      <div class="formula" id="formula">ยังไม่มีข้อมูล</div>
-    </div>
-    <div class="result" style="margin-top:10px">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-        <small>เปอร์เซ็นต์</small>
-        <button class="copy-btn" data-copy="percent">Copy</button>
-      </div>
-      <div class="big" id="percent">—</div>
+      <div class="big" id="reportOutput">ยังไม่มีข้อมูลรายงาน</div>
+      <div class="formula" id="formula"></div>
     </div>
   </div>
 </div>
@@ -181,10 +185,10 @@ const switchBtn = document.getElementById('switchBtn');
 const statusEl = document.getElementById('status');
 const highEl = document.getElementById('high');
 const lowEl = document.getElementById('low');
-const diffEl = document.getElementById('difference');
-const percentEl = document.getElementById('percent');
+const reportOutput = document.getElementById('reportOutput');
 const formulaEl = document.getElementById('formula');
 const baseEl = document.getElementById('base');
+const shiftSelect = document.getElementById('shiftSelect');
 const resetBtn = document.getElementById('resetBtn');
 const calculateBtn = document.getElementById('calculateBtn');
 const highManual = document.getElementById('highManual');
@@ -364,7 +368,6 @@ async function getWorker(){
   return worker;
 }
 
-// ปรับปรุงให้รับตัวเลขจำนวนกี่หลักก็ได้ (ขอแค่มีตัวเลขอย่างน้อย 1 ตัว)
 function cleanNumber(text){
   const cleanedText = (text||'').replace(/[^\d.]/g, '');
   if(!cleanedText || cleanedText === '.') return null;
@@ -449,7 +452,7 @@ function processReadValue(value){
     low = value;
     lowEl.textContent = value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
     updateCalculateButton();
-    setStatus(`บันทึกชุดที่ 2 = ${lowEl.textContent} แล้ว — กด “คำนวณ”`);
+    setStatus(`บันทึกชุดที่ 2 = ${lowEl.textContent} แล้ว — กด “คำนวณและสร้างรายงาน”`);
   }
 }
 
@@ -462,17 +465,37 @@ function calculate(){
   const base = Number(baseEl.value);
   const diff = high - low;
   const pct = (diff / base) * 100;
-  diffEl.textContent = diff.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
-  percentEl.textContent = pct.toLocaleString('en-US',{minimumFractionDigits: 2, maximumFractionDigits: 2}) + '%';
-  formulaEl.textContent = `(${high} − ${low}) = ${diff} → ${diff.toLocaleString('en-US')} ÷ ${base.toLocaleString('en-US')} × 100`;
-  setStatus('คำนวณเรียบร้อยแล้ว');
+  
+  // ดึงวันที่ปัจจุบันในรูปแบบ DD/MM/YYYY (ปี พ.ศ.)
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, '0');
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const year = now.getFullYear() + 543;
+  const dateStr = `${day}/${month}/${year}`;
+  
+  const shiftStr = shiftSelect.value;
+  const maxCapaStr = base.toLocaleString('en-US');
+  const capacityStr = diff.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
+  const utilizationStr = pct.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+  const reportText = `ผลผลิตวันที่ ${dateStr}
+- ผลัด ${shiftStr}
+- Max.Capacity = ${maxCapaStr} kWh.
+- Capacity = ${capacityStr} kWh.
+- Utilization = ${utilizationStr} %
+- Break down time = 0hr.`;
+
+  reportOutput.textContent = reportText;
+  formulaStr = `(${high} − ${low}) = ${diff} → Utilization: (${diff} ÷ ${base}) × 100 = ${utilizationStr}%`;
+  formulaEl.textContent = formulaStr;
+  setStatus('สร้างรายงานเรียบร้อยแล้ว');
 }
 
 function resetAll(){
   shot=0; high=null; low=null;
   highEl.textContent='—'; lowEl.textContent='—';
-  diffEl.textContent='—'; percentEl.textContent='—';
-  formulaEl.textContent='ยังไม่มีข้อมูล';
+  reportOutput.textContent='ยังไม่มีข้อมูลรายงาน';
+  formulaEl.textContent='';
   highManual.value=''; lowManual.value='';
   
   fileInput.value = '';
@@ -487,7 +510,7 @@ function resetAll(){
 startBtn.addEventListener('click',startCamera);
 switchBtn.addEventListener('click',()=>{facing=facing==='environment'?'user':'environment';startCamera();});
 captureBtn.addEventListener('click',captureAndRead);
-baseEl.addEventListener('change',()=>{ if(high!==null && low!==null) setStatus('เปลี่ยนค่าฐานแล้ว — กด “คำนวณ” เพื่อคำนวณใหม่'); });
+baseEl.addEventListener('change',()=>{ if(high!==null && low!==null) setStatus('เปลี่ยนค่าฐานแล้ว — กด “คำนวณและสร้างรายงาน” ใหม่'); });
 resetBtn.addEventListener('click',resetAll);
 calculateBtn.addEventListener('click',calculate);
 
@@ -495,7 +518,7 @@ document.querySelectorAll('.copy-btn').forEach(btn=>{
   btn.addEventListener('click',async()=>{
     const el=document.getElementById(btn.dataset.copy);
     const text=el.textContent.trim();
-    if(text==='—') return;
+    if(text==='ยังไม่มีข้อมูลรายงาน') return;
     try{
       await navigator.clipboard.writeText(text);
       const old=btn.textContent; btn.textContent='Copied!'; setTimeout(()=>btn.textContent=old,1200);
