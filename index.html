@@ -12,139 +12,168 @@
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <style>
-*{box-sizing:border-box} body{margin:0;background:#f4f6f8;color:#17202a;font-family:'Kanit',sans-serif} .app{max-width:760px;margin:auto;padding:22px 16px 40px} .header{text-align:center;margin-bottom:18px} .header h1{font-size:27px;margin:0 0 4px;font-weight:600} .header p{margin:0;color:#6b7280;font-size:14px} .card{background:#fff;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 6px 24px rgba(0,0,0,.07)} .card h2{font-size:18px;margin:0 0 12px} .mode-tabs{display:flex;gap:10px;margin-bottom:15px;background:#e9eef5;padding:5px;border-radius:12px} .mode-btn{flex:1;background:transparent;color:#687386;border:none;padding:10px;border-radius:8px;font-weight:500;font-size:15px;transition:all 0.2s} .mode-btn.active{background:#fff;color:#1677ff;box-shadow:0 2px 8px rgba(0,0,0,.1)} .camera-wrap{position:relative;background:#111;border-radius:15px;overflow:hidden;aspect-ratio:16/10} video{width:100%;height:100%;object-fit:cover;display:block} 
+*{box-sizing:border-box}
+body{margin:0;background:#f4f6f8;color:#17202a;font-family:'Kanit',sans-serif}
+.app{max-width:760px;margin:auto;padding:22px 16px 40px}
+.header{text-align:center;margin-bottom:18px}
+.header h1{font-size:27px;margin:0 0 4px;font-weight:600}
+.header p{margin:0;color:#6b7280;font-size:14px}
+.card{background:#fff;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 6px 24px rgba(0,0,0,.07)}
+.card h2{font-size:18px;margin:0 0 12px}
 
-/* ----------------------------------------------------------- */
-/* อัปเดตขนาด .guide ตรงนี้: ปรับ top เป็น 39% และ height เป็น 22% */
-/* ----------------------------------------------------------- */
-.guide{position:absolute;left:8%;right:8%;top:39%;height:22%;border:3px solid #38bdf8;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.43);pointer-events:none} 
-.guide:after{content:'จัดตัวเลขให้อยู่ในกรอบนี้';position:absolute;left:50%;top:-34px;transform:translateX(-50%);white-space:nowrap;background:#38bdf8;color:#062033;padding:3px 12px;border-radius:20px;font-size:13px} 
+.mode-tabs{display:flex;gap:10px;margin-bottom:15px;background:#e9eef5;padding:5px;border-radius:12px}
+.mode-btn{flex:1;background:transparent;color:#687386;border:none;padding:10px;border-radius:8px;font-weight:500;font-size:15px;transition:all 0.2s}
+.mode-btn.active{background:#fff;color:#1677ff;box-shadow:0 2px 8px rgba(0,0,0,.1)}
 
-.upload-container{display:none;background:#f7f9fb;border:2px dashed #d7dee8;border-radius:15px;padding:20px;text-align:center} .crop-wrapper{display:none;margin-top:15px;max-height:400px;border-radius:10px;overflow:hidden;background:#111} #imageToCrop{display:block;max-width:100%} input[type="file"]{display:none} .custom-file-upload{display:inline-block;background:#1677ff;color:#fff;padding:12px 20px;border-radius:11px;cursor:pointer;font-weight:500;font-size:15px} .custom-file-upload:hover{background:#0e65e5} .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px} button,select,input{font-family:inherit;border-radius:11px;padding:12px 15px;font-size:15px} .capture-large{font-size:19px!important;padding:17px 30px!important;min-width:190px;box-shadow:0 5px 14px rgba(15,157,115,.25)} .upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px} .upload-box{background:#f7f9fb;border:1px solid #e1e7ef;border-radius:13px;padding:12px} .upload-title{font-size:14px;font-weight:500;margin-bottom:8px} .manual-input{width:100%;border:1px solid #d7dee8;border-radius:10px;padding:12px;font:inherit;font-size:18px;letter-spacing:2px;margin-bottom:8px;background:#fff} .upload-btn{width:100%;font-size:14px} @media(max-width:520px){.upload-grid{grid-template-columns:1fr}.capture-large{width:100%;font-size:20px!important;padding:18px!important}} button{cursor:pointer;background:#1677ff;color:#fff;font-weight:500;border:none} button.secondary{background:#e9eef5;color:#243447} button.success{background:#0f9d73} button.danger{background:#ff4d4f;color:#fff;} button:disabled{opacity:.5;cursor:not-allowed} .copy-btn{background:#fff;color:#17202a;padding:7px 12px;font-size:13px;border-radius:8px;font-weight:500;border:1px solid #d7dee8} .copy-btn:hover{background:#eef2f7} select{background:#eef2f7;width:100%;color:#17202a;border:none} .status{font-size:13px;color:#687386;margin-top:15px;min-height:20px;background:#fffbe6;padding:10px;border-radius:8px;border:1px solid #ffe58f; font-weight: 500;} .values{display:grid;grid-template-columns:1fr 1fr;gap:12px} .value{background:#f7f9fb;border-radius:13px;padding:14px; border: 2px solid transparent; transition: all 0.3s;} .value.active-target{border: 2px solid #1677ff; background: #ebf3ff;} .label{font-size:13px;color:#707b8c}.num{font-size:29px;font-weight:600;margin-top:2px;word-break:break-all} .result{background:#101828;color:#fff;border-radius:15px;padding:18px} .result .big{font-size:20px;font-weight:500;line-height:1.6;white-space:pre-wrap;font-family:inherit;} .result small{color:#b8c1ce} .formula{margin-top:9px;color:#d5dbe3;font-size:14px} 
-.zoom-wrap{display:none; align-items:center; gap:10px; margin-top:12px; background:#111; color:#fff; padding:10px 15px; border-radius:10px; font-size:14px;} .zoom-wrap input{flex:1; margin:0; cursor:pointer;}
-.preview-img{width:100%; max-height:80px; object-fit:contain; background:#111; border-radius:8px; margin-top:10px; display:none;}
-.retake-btn{width:100%; font-size:13px; padding:8px; margin-top:10px; display:none;}
+.camera-wrap{position:relative;background:#111;border-radius:15px;overflow:hidden;aspect-ratio:16/10}
+video{width:100%;height:100%;object-fit:cover;display:block}
+.guide{position:absolute;left:8%;right:8%;top:42.67%;height:14.66%;border:3px solid #38bdf8;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.43);pointer-events:none}
+.guide:after{content:'จัดตัวเลขให้อยู่ในกรอบนี้';position:absolute;left:50%;top:-34px;transform:translateX(-50%);white-space:nowrap;background:#38bdf8;color:#062033;padding:3px 12px;border-radius:20px;font-size:13px}
+
+.upload-container{display:none;background:#f7f9fb;border:2px dashed #d7dee8;border-radius:15px;padding:20px;text-align:center}
+.crop-wrapper{display:none;margin-top:15px;max-height:400px;border-radius:10px;overflow:hidden;background:#111}
+#imageToCrop{display:block;max-width:100%}
+input[type="file"]{display:none}
+.custom-file-upload{display:inline-block;background:#1677ff;color:#fff;padding:12px 20px;border-radius:11px;cursor:pointer;font-weight:500;font-size:15px}
+.custom-file-upload:hover{background:#0e65e5}
+
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+button,select,input{font-family:inherit;border-radius:11px;padding:12px 15px;font-size:15px}
+.capture-large{font-size:19px!important;padding:17px 30px!important;min-width:190px;box-shadow:0 5px 14px rgba(15,157,115,.25)}
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px}
+.upload-box{background:#f7f9fb;border:1px solid #e1e7ef;border-radius:13px;padding:12px}
+.upload-title{font-size:14px;font-weight:500;margin-bottom:8px}
+.manual-input{width:100%;border:1px solid #d7dee8;border-radius:10px;padding:12px;font:inherit;font-size:18px;letter-spacing:2px;margin-bottom:8px;background:#fff}
+.upload-btn{width:100%;font-size:14px}
+@media(max-width:520px){.upload-grid{grid-template-columns:1fr}.capture-large{width:100%;font-size:20px!important;padding:18px!important}}
+button{cursor:pointer;background:#1677ff;color:#fff;font-weight:500;border:none}
+button.secondary{background:#e9eef5;color:#243447}
+button.success{background:#0f9d73}
+button:disabled{opacity:.5;cursor:not-allowed}
+.copy-btn{background:#fff;color:#17202a;padding:7px 12px;font-size:13px;border-radius:8px;font-weight:500;border:1px solid #d7dee8}
+.copy-btn:hover{background:#eef2f7}
+select{background:#eef2f7;width:100%;color:#17202a;border:none}
+.status{font-size:13px;color:#687386;margin-top:15px;min-height:20px;background:#fffbe6;padding:10px;border-radius:8px;border:1px solid #ffe58f}
+.values{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.value{background:#f7f9fb;border-radius:13px;padding:14px}
+.label{font-size:13px;color:#707b8c}.num{font-size:29px;font-weight:600;margin-top:2px;word-break:break-all}
+.result{background:#101828;color:#fff;border-radius:15px;padding:18px}
+.result .big{font-size:20px;font-weight:500;line-height:1.6;white-space:pre-wrap;font-family:inherit;}
+.result small{color:#b8c1ce}
+.formula{margin-top:9px;color:#d5dbe3;font-size:14px}
 @media(max-width:520px){.values{grid-template-columns:1fr}.header h1{font-size:23px}.guide{left:8%;right:8%}}
 </style>
 </head>
 <body>
-<!-- โครงสร้างและ Script เหมือนเดิมทั้งหมด -->
 <div class="app">
-  <div class="header">
-    <h1>ระบบรายงานผลผลิตโรงงาน</h1>
-    <p>อ่านค่าตัวเลขและจัดรูปแบบรายงาน (ทำงานบนเบราว์เซอร์ 100%)</p>
-  </div>
+  <div class="header">
+    <h1>ระบบรายงานผลผลิตโรงงาน</h1>
+    <p>อ่านค่าตัวเลขและจัดรูปแบบรายงานอัตโนมัติ</p>
+  </div>
 
-  <div class="card">
-    <div class="mode-tabs">
-      <button class="mode-btn active" id="modeCameraBtn">📸 ใช้กล้อง</button>
-      <button class="mode-btn" id="modeUploadBtn">🖼️ อัปโหลดรูปภาพ</button>
-    </div>
+  <div class="card">
+    <div class="mode-tabs">
+      <button class="mode-btn active" id="modeCameraBtn">📸 ใช้กล้อง</button>
+      <button class="mode-btn" id="modeUploadBtn">🖼️ อัปโหลดรูปภาพ</button>
+    </div>
 
-    <!-- โหมดกล้องถ่ายรูป -->
-    <div id="cameraSection">
-      <div class="camera-wrap">
-        <video id="video" autoplay playsinline muted></video>
-        <div class="guide"></div>
-      </div>
-      <div id="zoomWrap" class="zoom-wrap">
-        <label>🔍 ซูม:</label>
-        <input type="range" id="zoomSlider" min="1" max="3" step="0.1" value="1">
-      </div>
-      <div class="row">
-        <button id="startBtn">เปิดกล้อง</button>
-        <button id="captureBtn" class="success capture-large" disabled>📷 ถ่ายรูป</button>
-        <button id="switchBtn" class="secondary" disabled>สลับกล้อง</button>
-      </div>
-    </div>
+    <!-- โหมดกล้องถ่ายรูป -->
+    <div id="cameraSection">
+      <div class="camera-wrap">
+        <video id="video" autoplay playsinline muted></video>
+        <div class="guide"></div>
+      </div>
+      <div class="row">
+        <button id="startBtn">เปิดกล้อง</button>
+        <button id="captureBtn" class="success capture-large" disabled>📷 ถ่ายรูป</button>
+        <button id="switchBtn" class="secondary" disabled>สลับกล้อง</button>
+      </div>
+    </div>
 
-    <!-- โหมดอัปโหลดรูปภาพ -->
-    <div id="uploadSection" class="upload-container">
-      <label class="custom-file-upload">
-        <input type="file" id="fileInput" accept="image/*">
-        เลือกรูปภาพจากเครื่อง
-      </label>
-      <p style="font-size: 13px; color: #687386; margin-top: 8px;">ลากกรอบคลุมเฉพาะตัวเลขที่ต้องการ</p>
-      
-      <div class="crop-wrapper" id="cropWrapper">
-        <img id="imageToCrop" src="" alt="Picture to crop">
-      </div>
-      
-      <div class="row" style="justify-content: center; display: none;" id="cropActionRow">
-        <button id="readCropBtn" class="success capture-large">🔍 อ่านค่าในกรอบ</button>
-      </div>
-    </div>
+    <!-- โหมดอัปโหลดรูปภาพ -->
+    <div id="uploadSection" class="upload-container">
+      <label class="custom-file-upload">
+        <input type="file" id="fileInput" accept="image/*">
+        เลือกรูปภาพจากเครื่อง
+      </label>
+      <p style="font-size: 13px; color: #687386; margin-top: 8px;">ลากกรอบคลุมเฉพาะตัวเลขที่ต้องการ</p>
+      
+      <div class="crop-wrapper" id="cropWrapper">
+        <img id="imageToCrop" src="" alt="Picture to crop">
+      </div>
+      
+      <div class="row" style="justify-content: center; display: none;" id="cropActionRow">
+        <button id="readCropBtn" class="success capture-large">🔍 อ่านค่าในกรอบที่เลือก</button>
+      </div>
+    </div>
 
-    <div class="upload-grid">
-      <div class="upload-box">
-        <div class="upload-title">ทางเลือก: กรอกชุดที่ 1 — ค่ามาก</div>
-        <input id="highManual" class="manual-input" type="text" inputmode="decimal" placeholder="กรอกตัวเลข">
-        <button id="highManualBtn" class="secondary upload-btn" type="button">บันทึกชุดที่ 1</button>
-      </div>
-      <div class="upload-box">
-        <div class="upload-title">ทางเลือก: กรอกชุดที่ 2 — ค่าน้อย</div>
-        <input id="lowManual" class="manual-input" type="text" inputmode="decimal" placeholder="กรอกตัวเลข">
-        <button id="lowManualBtn" class="secondary upload-btn" type="button">บันทึกชุดที่ 2</button>
-      </div>
-    </div>
-    
-    <div id="status" class="status">กด “เปิดกล้อง” หรือ “อัปโหลดรูปภาพ” เพื่อเริ่มใช้งาน</div>
-    <canvas id="canvas" style="display:none"></canvas>
-  </div>
+    <div class="upload-grid">
+      <div class="upload-box">
+        <div class="upload-title">ทางเลือก: กรอกชุดที่ 1 — ค่ามาก</div>
+        <input id="highManual" class="manual-input" type="text" inputmode="decimal" placeholder="กรอกตัวเลข">
+        <button id="highManualBtn" class="secondary upload-btn" type="button">บันทึกชุดที่ 1</button>
+      </div>
+      <div class="upload-box">
+        <div class="upload-title">ทางเลือก: กรอกชุดที่ 2 — ค่าน้อย</div>
+        <input id="lowManual" class="manual-input" type="text" inputmode="decimal" placeholder="กรอกตัวเลข">
+        <button id="lowManualBtn" class="secondary upload-btn" type="button">บันทึกชุดที่ 2</button>
+      </div>
+    </div>
+    
+    <div id="status" class="status">กด “เปิดกล้อง” หรือ “อัปโหลดรูปภาพ” เพื่อเริ่มใช้งาน</div>
+    <canvas id="canvas" style="display:none"></canvas>
+  </div>
 
-  <div class="card">
-    <h2>2. ค่าที่อ่านได้ (พร้อมภาพ)</h2>
-    <div class="values">
-      <div class="value active-target" id="boxHigh">
-        <div class="label">ชุดข้อมูลครั้งที่ 1 — ค่ามาก</div>
-        <div class="num" id="high">—</div>
-        <img id="highImg" class="preview-img" alt="crop 1">
-        <button id="retakeHighBtn" class="secondary retake-btn">🔄 ถ่ายใหม่ (ชุดที่ 1)</button>
-      </div>
-      <div class="value" id="boxLow">
-        <div class="label">ชุดข้อมูลครั้งที่ 2 — ค่าน้อย</div>
-        <div class="num" id="low">—</div>
-        <img id="lowImg" class="preview-img" alt="crop 2">
-        <button id="retakeLowBtn" class="secondary retake-btn">🔄 ถ่ายใหม่ (ชุดที่ 2)</button>
-      </div>
-    </div>
-    <div class="row" style="margin-top:15px;">
-      <button id="resetBtn" class="danger">ล้างข้อมูล เริ่มใหม่ทั้งหมด</button>
-    </div>
-  </div>
+  <div class="card">
+    <h2>2. ตั้งค่าการผลิต</h2>
+    <div style="margin-bottom: 12px;">
+      <label class="label" style="display:block; margin-bottom:5px;">เลือกค่าฐานสำหรับคำนวณ (Max.Capacity)</label>
+      <select id="base">
+        <option value="118800">118,800 kWh.</option>
+        <option value="79200" selected>79,200 kWh.</option>
+      </select>
+    </div>
+    <div>
+      <label class="label" style="display:block; margin-bottom:5px;">เลือกผลัดการทำงาน</label>
+      <select id="shiftSelect">
+        <option value="08:00-16:00น.">ผลัดเช้า (08:00-16:00น.)</option>
+        <option value="16:00-00:00น.">ผลัดบ่าย (16:00-00:00น.)</option>
+        <option value="00:00-08:00น.">ผลัดดึก (00:00-08:00น.)</option>
+      </select>
+    </div>
+  </div>
 
-  <div class="card">
-    <h2>3. ตั้งค่าการผลิต & รายงาน</h2>
-    <div style="margin-bottom: 12px; display:flex; gap:10px; flex-wrap:wrap;">
-      <div style="flex:1; min-width:200px;">
-        <label class="label" style="display:block; margin-bottom:5px;">ค่าฐาน (Max.Capacity)</label>
-        <select id="base">
-          <option value="118800">118,800 kWh.</option>
-          <option value="79200" selected>79,200 kWh.</option>
-        </select>
-      </div>
-      <div style="flex:1; min-width:200px;">
-        <label class="label" style="display:block; margin-bottom:5px;">ผลัดการทำงาน</label>
-        <select id="shiftSelect">
-          <option value="08:00-16:00น.">ผลัดเช้า (08:00-16:00น.)</option>
-          <option value="16:00-00:00น.">ผลัดบ่าย (16:00-00:00น.)</option>
-          <option value="00:00-08:00น.">ผลัดดึก (00:00-08:00น.)</option>
-        </select>
-      </div>
-    </div>
-    
-    <div class="row" style="margin-bottom:12px">
-      <button id="calculateBtn" class="success" disabled>🧮 คำนวณและสร้างรายงาน</button>
-    </div>
-    <div class="result">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px">
-        <small>รูปแบบข้อความสำหรับคัดลอก</small>
-        <button class="copy-btn" data-copy="reportOutput">Copy</button>
-      </div>
-      <div class="big" id="reportOutput">ยังไม่มีข้อมูลรายงาน</div>
-      <div class="formula" id="formula"></div>
-    </div>
-  </div>
+  <div class="card">
+    <h2>3. ค่าที่อ่านได้</h2>
+    <div class="values">
+      <div class="value">
+        <div class="label">ชุดข้อมูลครั้งที่ 1 — ค่ามาก</div>
+        <div class="num" id="high">—</div>
+      </div>
+      <div class="value">
+        <div class="label">ชุดข้อมูลครั้งที่ 2 — ค่าน้อย</div>
+        <div class="num" id="low">—</div>
+      </div>
+    </div>
+    <div class="row">
+      <button id="resetBtn" class="secondary">เริ่มใหม่ทั้งหมด</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>4. ผลลัพธ์ในรูปแบบรายงาน</h2>
+    <div class="row" style="margin-bottom:12px">
+      <button id="calculateBtn" class="success" disabled>🧮 คำนวณและสร้างรายงาน</button>
+    </div>
+    <div class="result">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px">
+        <small>รูปแบบข้อความสำหรับคัดลอก</small>
+        <button class="copy-btn" data-copy="reportOutput">Copy</button>
+      </div>
+      <div class="big" id="reportOutput">ยังไม่มีข้อมูลรายงาน</div>
+      <div class="formula" id="formula"></div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -156,14 +185,6 @@ const switchBtn = document.getElementById('switchBtn');
 const statusEl = document.getElementById('status');
 const highEl = document.getElementById('high');
 const lowEl = document.getElementById('low');
-const boxHigh = document.getElementById('boxHigh');
-const boxLow = document.getElementById('boxLow');
-const highImg = document.getElementById('highImg');
-const lowImg = document.getElementById('lowImg');
-const retakeHighBtn = document.getElementById('retakeHighBtn');
-const retakeLowBtn = document.getElementById('retakeLowBtn');
-const zoomWrap = document.getElementById('zoomWrap');
-const zoomSlider = document.getElementById('zoomSlider');
 const reportOutput = document.getElementById('reportOutput');
 const formulaEl = document.getElementById('formula');
 const baseEl = document.getElementById('base');
@@ -174,6 +195,7 @@ const highManual = document.getElementById('highManual');
 const lowManual = document.getElementById('lowManual');
 const highManualBtn = document.getElementById('highManualBtn');
 const lowManualBtn = document.getElementById('lowManualBtn');
+
 const modeCameraBtn = document.getElementById('modeCameraBtn');
 const modeUploadBtn = document.getElementById('modeUploadBtn');
 const cameraSection = document.getElementById('cameraSection');
@@ -186,284 +208,303 @@ const readCropBtn = document.getElementById('readCropBtn');
 
 let stream = null;
 let facing = 'environment';
-let activeTarget = 'high'; 
+let shot = 0;
 let high = null;
 let low = null;
 let worker = null;
 let cropper = null;
-let videoTrack = null;
 
-function setStatus(t){ statusEl.textContent = t; }
-
-function updateTargetUI() {
-  boxHigh.classList.remove('active-target');
-  boxLow.classList.remove('active-target');
-  
-  if (activeTarget === 'high') {
-    boxHigh.classList.add('active-target');
-    setStatus('👉 สถานะ: รอถ่าย/อัปโหลดภาพสำหรับ "ชุดที่ 1"');
-  } else if (activeTarget === 'low') {
-    boxLow.classList.add('active-target');
-    setStatus('👉 สถานะ: รอถ่าย/อัปโหลดภาพสำหรับ "ชุดที่ 2"');
-  } else {
-    setStatus('✅ บันทึกครบทั้ง 2 ชุดแล้ว — กด “คำนวณและสร้างรายงาน” ได้เลย');
-  }
-}
-
-retakeHighBtn.addEventListener('click', () => {
-  high = null; highEl.textContent = '—';
-  highImg.style.display = 'none'; retakeHighBtn.style.display = 'none';
-  activeTarget = 'high'; updateTargetUI(); updateCalculateButton();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-});
-
-retakeLowBtn.addEventListener('click', () => {
-  low = null; lowEl.textContent = '—';
-  lowImg.style.display = 'none'; retakeLowBtn.style.display = 'none';
-  activeTarget = 'low'; updateTargetUI(); updateCalculateButton();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-});
+function setStatus(t){ statusEl.textContent=t; }
 
 modeCameraBtn.addEventListener('click', () => {
-  modeCameraBtn.classList.add('active'); modeUploadBtn.classList.remove('active');
-  cameraSection.style.display = 'block'; uploadSection.style.display = 'none';
-  if(activeTarget) updateTargetUI();
+  modeCameraBtn.classList.add('active');
+  modeUploadBtn.classList.remove('active');
+  cameraSection.style.display = 'block';
+  uploadSection.style.display = 'none';
+  setStatus('กด “เปิดกล้อง” เพื่อใช้งานผ่านกล้อง');
 });
 
 modeUploadBtn.addEventListener('click', () => {
-  modeUploadBtn.classList.add('active'); modeCameraBtn.classList.remove('active');
-  cameraSection.style.display = 'none'; uploadSection.style.display = 'block';
-  if(stream) { stream.getTracks().forEach(t=>t.stop()); captureBtn.disabled = true; switchBtn.disabled = true; zoomWrap.style.display = 'none';}
-  if(activeTarget) updateTargetUI();
+  modeUploadBtn.classList.add('active');
+  modeCameraBtn.classList.remove('active');
+  cameraSection.style.display = 'none';
+  uploadSection.style.display = 'block';
+  if(stream) {
+    stream.getTracks().forEach(t=>t.stop());
+    captureBtn.disabled = true;
+    switchBtn.disabled = true;
+  }
+  setStatus('เลือกรูปภาพจากเครื่องเพื่อเริ่มต้น');
 });
 
 fileInput.addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if(!file) return;
-  const url = URL.createObjectURL(file);
-  imageToCrop.src = url;
-  cropWrapper.style.display = 'block'; cropActionRow.style.display = 'flex';
-  
-  if(cropper) cropper.destroy();
-  cropper = new Cropper(imageToCrop, {
-    viewMode: 1, dragMode: 'crop', autoCropArea: 0.8, restore: false, guides: true, center: true, highlight: false, cropBoxMovable: true, cropBoxResizable: true, toggleDragModeOnDblclick: false,
-  });
-  setStatus('ลากปรับขนาดกรอบให้คลุมเฉพาะ "ตัวเลข" ที่ต้องการ แล้วกด "อ่านค่าในกรอบ"');
+  const file = e.target.files[0];
+  if(!file) return;
+
+  const url = URL.createObjectURL(file);
+  imageToCrop.src = url;
+  cropWrapper.style.display = 'block';
+  cropActionRow.style.display = 'flex';
+  
+  if(cropper) cropper.destroy();
+  
+  cropper = new Cropper(imageToCrop, {
+    viewMode: 1,
+    dragMode: 'crop',
+    autoCropArea: 0.5,
+    restore: false,
+    guides: true,
+    center: true,
+    highlight: false,
+    cropBoxMovable: true,
+    cropBoxResizable: true,
+    toggleDragModeOnDblclick: false,
+  });
+  
+  setStatus('ลากปรับขนาดกรอบให้คลุมเฉพาะ "ตัวเลข" ที่ต้องการ แล้วกด "อ่านค่าในกรอบที่เลือก"');
 });
 
 readCropBtn.addEventListener('click', async () => {
-  if(!cropper) return;
-  if(activeTarget === null){ setStatus('มีข้อมูลครบ 2 ชุดแล้ว (กดถ่ายใหม่ที่ชุดที่ต้องการแก้)'); return; }
+  if(!cropper) return;
+  if(high!==null && low!==null){
+    setStatus('มีข้อมูลครบ 2 ชุดแล้ว — กด “เริ่มใหม่” เพื่อเริ่มใหม่');
+    return;
+  }
 
-  try {
-    readCropBtn.disabled = true; readCropBtn.textContent = 'กำลังประมวลผล...';
-    const croppedCanvas = cropper.getCroppedCanvas();
-    const dataUrl = croppedCanvas.toDataURL('image/jpeg'); 
-    
-    setStatus(`ระบบกำลังสแกนตัวเลข... (ใช้เวลาสักครู่)`);
-    const value = await recognizeCanvas(croppedCanvas);
+  try {
+    readCropBtn.disabled = true;
+    readCropBtn.textContent = 'กำลังประมวลผล...';
+    
+    const croppedCanvas = cropper.getCroppedCanvas();
+    setStatus(`AI OCR กำลังอ่านข้อมูลจากรูปภาพ...`);
+    
+    const value = await recognizeCanvas(croppedCanvas);
 
-    if(value === null){
-      setStatus('อ่านไม่สำเร็จ (กรุณาครอบเฉพาะตัวเลข และหลีกเลี่ยงแสงสะท้อน)');
-    } else {
-      processReadValue(value, dataUrl);
-    }
-  } catch (e) {
-    setStatus('เกิดข้อผิดพลาด: ' + e.message);
-  } finally {
-    readCropBtn.disabled = false; readCropBtn.innerHTML = '🔍 อ่านค่าในกรอบ';
-  }
+    if(value === null){
+      setStatus('AI OCR อ่านไม่สำเร็จ (ลองจัดกรอบให้ชัดเจนขึ้น) — ลองใหม่อีกครั้ง');
+    } else {
+      processReadValue(value);
+    }
+  } catch (e) {
+    setStatus('เกิดข้อผิดพลาดในการอ่านรูป: ' + e.message);
+  } finally {
+    readCropBtn.disabled = false;
+    readCropBtn.innerHTML = '🔍 อ่านค่าในกรอบที่เลือก';
+  }
 });
 
 async function startCamera(){
-  if(activeTarget === null) {
-      setStatus('มีข้อมูลครบแล้ว หากต้องการถ่ายใหม่ ให้กดปุ่ม "ถ่ายใหม่" ด้านล่างก่อนเปิดกล้อง');
-      return;
-  }
-  try{
-    if(stream) stream.getTracks().forEach(t=>t.stop());
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: facing }, width: { ideal: 1920 }, height: { ideal: 1080 }, advanced: [{ focusMode: "continuous" }] }, audio: false
-    });
-    video.srcObject=stream; await video.play();
-    
-    videoTrack = stream.getVideoTracks()[0];
-    const capabilities = videoTrack.getCapabilities();
-    if(capabilities.zoom) {
-      zoomSlider.min = capabilities.zoom.min;
-      zoomSlider.max = capabilities.zoom.max;
-      zoomSlider.step = capabilities.zoom.step;
-      zoomSlider.value = videoTrack.getSettings().zoom || capabilities.zoom.min;
-      zoomWrap.style.display = 'flex';
-      
-      zoomSlider.oninput = (e) => {
-        videoTrack.applyConstraints({ advanced: [{ zoom: e.target.value }] });
-      };
-    } else {
-      zoomWrap.style.display = 'none';
-    }
-
-    captureBtn.disabled=false; switchBtn.disabled=false;
-    updateTargetUI();
-  }catch(e){ setStatus('ไม่สามารถเปิดกล้องได้: '+e.message); zoomWrap.style.display = 'none'; }
+  try{
+    if(stream) stream.getTracks().forEach(t=>t.stop());
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: facing },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        advanced: [{ focusMode: "continuous" }]
+      },
+      audio: false
+    });
+    video.srcObject=stream;
+    await video.play();
+    captureBtn.disabled=false;
+    switchBtn.disabled=false;
+    setStatus('พร้อมถ่าย — จัดให้อยู่ในกรอบ แล้วกด “ถ่ายรูป”');
+  }catch(e){
+    setStatus('ไม่สามารถเปิดกล้องได้: '+e.message);
+  }
 }
 
 async function captureAndRead(){
-  if(!video.videoWidth) return;
-  if(activeTarget === null){ setStatus('มีข้อมูลครบแล้ว'); return; }
+  if(!video.videoWidth) return;
+  if(high!==null && low!==null){ setStatus('มีข้อมูลครบแล้ว'); return; }
 
-  captureBtn.disabled=true;
-  try{
-    const videoRect = video.getBoundingClientRect();
-    const guideRect = document.querySelector('.guide').getBoundingClientRect();
-    const vw = video.videoWidth, vh = video.videoHeight;
-    const scale = Math.max(videoRect.width / vw, videoRect.height / vh);
-    const renderedWidth = vw * scale; const renderedHeight = vh * scale;
-    const offsetX = (renderedWidth - videoRect.width) / 2; const offsetY = (renderedHeight - videoRect.height) / 2;
-    const guideX = guideRect.left - videoRect.left; const guideY = guideRect.top - videoRect.top;
-    
-    const sx = (guideX + offsetX) / scale; const sy = (guideY + offsetY) / scale;
-    const sw = guideRect.width / scale; const sh = guideRect.height / scale;
+  captureBtn.disabled=true;
+  try{
+    const videoRect = video.getBoundingClientRect();
+    const guideRect = document.querySelector('.guide').getBoundingClientRect();
+    const vw = video.videoWidth, vh = video.videoHeight;
+    const scale = Math.max(videoRect.width / vw, videoRect.height / vh);
+    const renderedWidth = vw * scale;
+    const renderedHeight = vh * scale;
+    const offsetX = (renderedWidth - videoRect.width) / 2;
+    const offsetY = (renderedHeight - videoRect.height) / 2;
+    const guideX = guideRect.left - videoRect.left;
+    const guideY = guideRect.top - videoRect.top;
+    
+    const sx = (guideX + offsetX) / scale;
+    const sy = (guideY + offsetY) / scale;
+    const sw = guideRect.width / scale;
+    const sh = guideRect.height / scale;
 
-    canvas.width = sw; canvas.height = sh;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
-    const dataUrl = canvas.toDataURL('image/jpeg'); 
+    canvas.width = sw; 
+    canvas.height = sh;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
 
-    setStatus(`ระบบกำลังสแกนตัวเลขจากภาพ...`);
-    const value = await recognizeCanvas(canvas);
+    setStatus(`AI OCR กำลังอ่านภาพจากกล้อง...`);
+    const value = await recognizeCanvas(canvas);
 
-    if(value === null){
-      setStatus('อ่านภาพไม่สำเร็จ — ถ่ายให้ชัดเจนขึ้น หรือกรอกข้อมูลด้วยตนเอง');
-    } else {
-      processReadValue(value, dataUrl);
-    }
-  }catch(e){
-    setStatus('เกิดข้อผิดพลาด: '+e.message);
-  }finally{
-    captureBtn.disabled=false;
-  }
+    if(value === null){
+      setStatus('AI OCR อ่านไม่สำเร็จ (กรุณาจัดเป้าหมายให้อยู่กลางกรอบ) — ถ่ายใหม่หรือกรอกแทน');
+    } else {
+      processReadValue(value);
+    }
+  }catch(e){
+    setStatus('เกิดข้อผิดพลาดในการอ่าน: '+e.message);
+  }finally{
+    captureBtn.disabled=false;
+  }
 }
 
 async function getWorker(){
-  if(worker) return worker;
-  setStatus('กำลังโหลด AI (ทำครั้งเดียว)...');
-  worker = await Tesseract.createWorker('eng');
-  await worker.setParameters({ tessedit_char_whitelist: '0123456789.', tessedit_pageseg_mode: '7' });
-  return worker;
+  if(worker) return worker;
+  setStatus('กำลังเตรียม AI OCR...');
+  worker = await Tesseract.createWorker('eng');
+  await worker.setParameters({
+    tessedit_char_whitelist: '0123456789,.',
+    tessedit_pageseg_mode: '7' 
+  });
+  return worker;
 }
 
 function cleanNumber(text){
-  const cleanedText = (text||'').replace(/[^\d.]/g, '');
-  if(!cleanedText || cleanedText === '.') return null;
-  const value = parseFloat(cleanedText);
-  if (isNaN(value)) return null;
-  return value;
+  const cleanedText = (text||'').replace(/[^\d.]/g, '');
+  if(!cleanedText || cleanedText === '.') return null;
+  const value = parseFloat(cleanedText);
+  if (isNaN(value)) return null;
+  return value;
 }
 
-function preprocessImage(sourceCanvas, invert = false){
-  const scale = 2;
-  const out = document.createElement('canvas');
-  out.width = sourceCanvas.width * scale; out.height = sourceCanvas.height * scale;
-  const ctx = out.getContext('2d');
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(sourceCanvas, 0, 0, out.width, out.height);
+function preprocessImage(sourceCanvas){
+  const scale = 3; 
+  const out = document.createElement('canvas');
+  out.width = sourceCanvas.width * scale;
+  out.height = sourceCanvas.height * scale;
+  const ctx = out.getContext('2d', { willReadFrequently: true });
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(sourceCanvas, 0, 0, out.width, out.height);
 
-  const imgData = ctx.getImageData(0, 0, out.width, out.height);
-  const data = imgData.data;
+  const imgData = ctx.getImageData(0, 0, out.width, out.height);
+  const data = imgData.data;
+  const luma = new Uint8ClampedArray(out.width * out.height);
+  
+  for (let i = 0; i < data.length; i += 4) {
+    luma[i / 4] = (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+  }
 
-  for (let i = 0; i < data.length; i += 4) {
-    let brightness = (data[i] * 0.299) + (data[i + 1] * 0.587) + (data[i + 2] * 0.114);
-    if(invert) brightness = brightness < 128 ? 255 : 0; else brightness = brightness < 128 ? 0 : 255;
-    data[i] = data[i + 1] = data[i + 2] = brightness;
-  }
-  ctx.putImageData(imgData, 0, 0);
-  return out;
+  const kernelSize = 15, c = 10;
+  for (let y = 0; y < out.height; y++) {
+    for (let x = 0; x < out.width; x++) {
+      let sum = 0, count = 0;
+      for (let ky = -Math.floor(kernelSize / 2); ky <= Math.floor(kernelSize / 2); ky++) {
+        for (let kx = -Math.floor(kernelSize / 2); kx <= Math.floor(kernelSize / 2); kx++) {
+          const iy = y + ky, ix = x + kx;
+          if (iy >= 0 && iy < out.height && ix >= 0 && ix < out.width) {
+            sum += luma[iy * out.width + ix];
+            count++;
+          }
+        }
+      }
+      const v = luma[y * out.width + x] < ((sum / count) - c) ? 0 : 255;
+      data[(y * out.width + x) * 4] = data[(y * out.width + x) * 4 + 1] = data[(y * out.width + x) * 4 + 2] = v;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+  return out;
 }
 
 async function recognizeCanvas(sourceCanvas){
-  const w = await getWorker();
-  let processed = preprocessImage(sourceCanvas, false);
-  let result = await w.recognize(processed);
-  let value = cleanNumber(result.data.text);
+  const w = await getWorker();
+  const processed = preprocessImage(sourceCanvas);
+  
+  let result = await w.recognize(processed);
+  let value = cleanNumber(result.data.text);
 
-  if(value === null){
-    processed = preprocessImage(sourceCanvas, true);
-    result = await w.recognize(processed);
-    value = cleanNumber(result.data.text);
-  }
-  
-  if(value === null){
-    result = await w.recognize(sourceCanvas);
-    value = cleanNumber(result.data.text);
-  }
-  return value;
+  if(value === null){
+    const ctx = processed.getContext('2d');
+    const imgData = ctx.getImageData(0, 0, processed.width, processed.height);
+    const d = imgData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      d[i] = 255 - d[i]; d[i + 1] = 255 - d[i + 1]; d[i + 2] = 255 - d[i + 2];
+    }
+    ctx.putImageData(imgData, 0, 0);
+    result = await w.recognize(processed);
+    value = cleanNumber(result.data.text);
+  }
+  
+  if(value === null){
+    result = await w.recognize(sourceCanvas);
+    value = cleanNumber(result.data.text);
+  }
+  return value;
 }
 
-function processReadValue(value, dataUrl = null){
-  if (activeTarget === 'high') {
-    high = value;
-    highEl.textContent = value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
-    if(dataUrl) { highImg.src = dataUrl; highImg.style.display = 'block'; }
-    retakeHighBtn.style.display = 'block';
-    
-    activeTarget = (low === null) ? 'low' : null;
-    
-  } else if (activeTarget === 'low') {
-    low = value;
-    lowEl.textContent = value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
-    if(dataUrl) { lowImg.src = dataUrl; lowImg.style.display = 'block'; }
-    retakeLowBtn.style.display = 'block';
-    
-    activeTarget = (high === null) ? 'high' : null;
-  }
-  
-  updateTargetUI();
-  updateCalculateButton();
+function processReadValue(value){
+  shot++;
+  if(shot === 1){
+    high = value;
+    highEl.textContent = value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
+    updateCalculateButton();
+    setStatus(`บันทึกชุดที่ 1 = ${highEl.textContent} แล้ว — เตรียมอ่านครั้งที่ 2 (ค่าน้อย)`);
+  }else{
+    low = value;
+    lowEl.textContent = value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
+    updateCalculateButton();
+    setStatus(`บันทึกชุดที่ 2 = ${lowEl.textContent} แล้ว — กด “คำนวณและสร้างรายงาน”`);
+  }
 }
 
-function updateCalculateButton(){ calculateBtn.disabled = !(high!==null && low!==null); }
+function updateCalculateButton(){
+  calculateBtn.disabled = !(high!==null && low!==null);
+}
 
 function calculate(){
-  if(high===null || low===null) return;
-  const base = Number(baseEl.value);
-  const diff = high - low;
-  const pct = (diff / base) * 100;
-  
-  const now = new Date();
-  const day = String(now.getDate()).padStart(2, '0');
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const year = now.getFullYear() + 543;
-  const dateStr = `${day}/${month}/${year}`;
-  
-  const shiftStr = shiftSelect.value;
-  const maxCapaStr = base.toLocaleString('en-US');
-  const capacityStr = diff.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
-  const utilizationStr = pct.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  if(high===null || low===null) return;
+  const base = Number(baseEl.value);
+  const diff = high - low;
+  const pct = (diff / base) * 100;
+  
+  // ดึงวันที่ปัจจุบันในรูปแบบ DD/MM/YYYY (ปี พ.ศ.)
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, '0');
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const year = now.getFullYear() + 543;
+  const dateStr = `${day}/${month}/${year}`;
+  
+  const shiftStr = shiftSelect.value;
+  const maxCapaStr = base.toLocaleString('en-US');
+  const capacityStr = diff.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
+  const utilizationStr = pct.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
-  const reportText = `ผลผลิตวันที่ ${dateStr}\n- ผลัด ${shiftStr}\n- Max.Capacity = ${maxCapaStr} kWh.\n- Capacity = ${capacityStr} kWh.\n- Utilization = ${utilizationStr} %\n- Break down time = 0hr.`;
+  const reportText = `ผลผลิตวันที่ ${dateStr}
+- ผลัด ${shiftStr}
+- Max.Capacity = ${maxCapaStr} kWh.
+- Capacity = ${capacityStr} kWh.
+- Utilization = ${utilizationStr} %
+- Break down time = 0hr.`;
 
-  reportOutput.textContent = reportText;
-  formulaStr = `(${high} − ${low}) = ${diff} → Utilization: (${diff} ÷ ${base}) × 100 = ${utilizationStr}%`;
-  formulaEl.textContent = formulaStr;
-  setStatus('สร้างรายงานเรียบร้อยแล้ว');
-  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  reportOutput.textContent = reportText;
+  formulaStr = `(${high} − ${low}) = ${diff} → Utilization: (${diff} ÷ ${base}) × 100 = ${utilizationStr}%`;
+  formulaEl.textContent = formulaStr;
+  setStatus('สร้างรายงานเรียบร้อยแล้ว');
 }
 
 function resetAll(){
-  high=null; low=null; activeTarget='high';
-  highEl.textContent='—'; lowEl.textContent='—';
-  highImg.style.display='none'; lowImg.style.display='none';
-  retakeHighBtn.style.display='none'; retakeLowBtn.style.display='none';
-  
-  reportOutput.textContent='ยังไม่มีข้อมูลรายงาน'; formulaEl.textContent='';
-  highManual.value=''; lowManual.value='';
-  
-  fileInput.value = ''; cropWrapper.style.display = 'none'; cropActionRow.style.display = 'none';
-  if(cropper){ cropper.destroy(); cropper = null; }
+  shot=0; high=null; low=null;
+  highEl.textContent='—'; lowEl.textContent='—';
+  reportOutput.textContent='ยังไม่มีข้อมูลรายงาน';
+  formulaEl.textContent='';
+  highManual.value=''; lowManual.value='';
+  
+  fileInput.value = '';
+  cropWrapper.style.display = 'none';
+  cropActionRow.style.display = 'none';
+  if(cropper){ cropper.destroy(); cropper = null; }
 
-  updateTargetUI();
-  updateCalculateButton();
+  updateCalculateButton();
+  setStatus('รีเซ็ตข้อมูลแล้ว — เลือกเปิดกล้อง หรืออัปโหลดรูปภาพเพื่อเริ่มใหม่');
 }
 
 startBtn.addEventListener('click',startCamera);
@@ -474,29 +515,40 @@ resetBtn.addEventListener('click',resetAll);
 calculateBtn.addEventListener('click',calculate);
 
 document.querySelectorAll('.copy-btn').forEach(btn=>{
-  btn.addEventListener('click',async()=>{
-    const el=document.getElementById(btn.dataset.copy);
-    const text=el.textContent.trim();
-    if(text==='ยังไม่มีข้อมูลรายงาน') return;
-    try{
-      await navigator.clipboard.writeText(text);
-      const old=btn.textContent; btn.textContent='Copied!'; setTimeout(()=>btn.textContent=old,1200);
-    }catch(e){
-      const ta=document.createElement('textarea');
-      ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
-      btn.textContent='Copied!'; setTimeout(()=>btn.textContent='Copy',1200);
-    }
-  });
+  btn.addEventListener('click',async()=>{
+    const el=document.getElementById(btn.dataset.copy);
+    const text=el.textContent.trim();
+    if(text==='ยังไม่มีข้อมูลรายงาน') return;
+    try{
+      await navigator.clipboard.writeText(text);
+      const old=btn.textContent; btn.textContent='Copied!'; setTimeout(()=>btn.textContent=old,1200);
+    }catch(e){
+      const ta=document.createElement('textarea');
+      ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+      btn.textContent='Copied!'; setTimeout(()=>btn.textContent='Copy',1200);
+    }
+  });
 });
 
 function saveManualValue(type){
-  const input = type==='high' ? highManual : lowManual;
-  const value = cleanNumber(input.value);
-  if(value===null){ setStatus('กรุณากรอกตัวเลขให้ถูกต้อง'); input.focus(); return; }
-  
-  activeTarget = type; 
-  processReadValue(value, null); 
-  input.value = ''; 
+  const input = type==='high' ? highManual : lowManual;
+  const value = cleanNumber(input.value);
+  if(value===null){ setStatus('กรุณากรอกตัวเลขให้ถูกต้อง'); input.focus(); return; }
+
+  if(type==='high'){
+    if(high!==null){ setStatus('มีชุดที่ 1 แล้ว'); return; }
+    high = value;
+    highEl.textContent = value.toLocaleString('en-US');
+    shot = Math.max(shot,1);
+    setStatus(`บันทึกชุดที่ 1 (กรอกเอง) = ${highEl.textContent}`);
+  }else{
+    if(low!==null){ setStatus('มีชุดที่ 2 แล้ว'); return; }
+    low = value;
+    lowEl.textContent = value.toLocaleString('en-US');
+    shot = Math.max(shot,2);
+    setStatus(`บันทึกชุดที่ 2 (กรอกเอง) = ${lowEl.textContent}`);
+  }
+  updateCalculateButton();
 }
 
 highManualBtn.addEventListener('click',()=>saveManualValue('high'));
@@ -505,8 +557,8 @@ highManual.addEventListener('input',()=>{ highManual.value=highManual.value.repl
 lowManual.addEventListener('input',()=>{ lowManual.value=lowManual.value.replace(/[^\d.]/g,''); });
 
 window.addEventListener('beforeunload',()=>{
-  if(stream) stream.getTracks().forEach(t=>t.stop());
-  if(worker) worker.terminate();
+  if(stream) stream.getTracks().forEach(t=>t.stop());
+  if(worker) worker.terminate();
 });
 </script>
 </body>
